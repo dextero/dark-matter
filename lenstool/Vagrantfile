@@ -1,0 +1,26 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$script = <<SCRIPT
+#!/bin/bash
+
+sudo apt-get update
+sudo apt-get install -y git python-pip python-dev libgsl0-dev \
+    vim python-numpy python-scipy python-matplotlib libicu48 mayavi2
+sudo ln -s /usr/include/gsl /usr/local/include/gsl
+sudo ln -s /usr/lib/libgsl.a /usr/local/lib/libgsl.a
+sudo ln -s /usr/lib/libgslcblas.a /usr/local/lib/libgslcblas.a
+sudo pip install numpy
+git clone https://github.com/apetri/LensTools
+cd LensTools
+python setup.py build
+sudo python setup.py install
+
+SCRIPT
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "hashicorp/precise64"
+  config.vm.provision "shell", inline: $script
+end
