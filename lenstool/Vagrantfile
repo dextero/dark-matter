@@ -4,6 +4,26 @@
 $script = <<SCRIPT
 #!/bin/bash
 
+set -e
+
+function merge_dirs() {
+    local SRC="$1"
+    local DST="$2"
+
+    if [[ -L "$SRC" ]]; then
+        return 0
+    fi
+
+    if ls "$SRC"/*; then
+        cp -rf "$SRC/"* "$DST/"
+    fi
+    rm -rf "$SRC"
+    ln -s "$DST" "$SRC"
+}
+
+merge_dirs /usr/local/include /usr/include
+merge_dirs /usr/local/lib /usr/lib
+
 apt-get update
 apt-get install -y git python-pip python-dev libgsl0-dev \
     vim python-numpy python-scipy python-matplotlib libicu52 mayavi2
