@@ -59,6 +59,7 @@ apt-get install -y \
     build-essential \
     g++ \
     git \
+    libblas-dev \
     libboost-dev \
     libcfitsio3-dev \
     libfftw3-dev \
