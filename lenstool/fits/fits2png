@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -e
+
+function die() {
+    echo $@ >&2
+    exit 1
+}
+
+[[ "$1" == "-h" || "$1" == "--help" ]] \
+    && die -e "Converts image data from a FITS file into .png\n\nusage: $0 fits_file [ output_file ]"
+
+SCRIPT_DIR="$(dirname $(readlink -f "$0"))"
+
+INPUT="$1"
+OUTPUT="$2"
+
+[[ "$INPUT" ]] || die "usage: $0 fits_file [ output_file ]"
+[[ "$OUTPUT" ]] || OUTPUT="output.png"
+
+TMPFILE="$(mktemp)"
+
+echo -n "* extracting image size... "
+XDIM="$("$SCRIPT_DIR/fits-get" header NAXIS1 "$INPUT")"
+YDIM="$("$SCRIPT_DIR/fits-get" header NAXIS2 "$INPUT")"
+echo "$XDIM x $YDIM"
+
+echo -n "* preprocessing data to $TMPFILE... "
+"$SCRIPT_DIR/fits-get" data "$INPUT" | "$SCRIPT_DIR/decode" '>f' | "$SCRIPT_DIR/make-2d" $XDIM $YDIM > "$TMPFILE"
+echo "done"
+
+echo -n "* generating plot to $OUTPUT... "
+gnuplot <<EOF
+set term png size 1000,1000
+set output "$OUTPUT"
+set view map
+splot "$TMPFILE" using 1:2:3 with image
+EOF
+echo "done"

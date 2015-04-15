@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import sys
+import struct
+import binascii
+
+def print_usage():
+    print('Extracts data from FITS file.\n'
+          '\n'
+          'usage:\n'
+          '  * list all options:\n'
+          '    {0} headers [ IN_FILE ]\n'
+          '  * get OPTION:\n'
+          '    {0} header OPTION [ IN_FILE ]\n'
+          '  * get OPTION from EXTENSION:\n'
+          '    {0} header EXTENSION/OPTION [ IN_FILE ]\n'
+          '  * get data:\n'
+          '    {0} data [ IN_FILE ]'.format(sys.argv[0]), file=sys.stderr)
+
+in_file = '/dev/stdin'
+if len(sys.argv) < 3 or any(x in sys.argv for x in ('-h', '--help')):
+    print_usage()
+    sys.exit(1)
+
+mode = sys.argv[1]
+option_to_print = None
+input_file_idx = 2
+
+if mode == 'header':
+    option_to_print = sys.argv[2].split('/', 2)
+    input_file_idx = 3
+elif mode in ('headers', 'data'):
+    pass
+else:
+    print_usage()
+    sys.exit(1)
+
+if len(sys.argv) > input_file_idx and sys.argv[input_file_idx] != '-':
+    in_file = sys.argv[input_file_idx]
+
+def file_peek(f, size):
+    pos = f.tell()
+    data = f.read(size)
+    f.seek(pos)
+    return data
+
+class Property(object):
+    def __init__(self, name, value, comment):
+        self.name = name
+        self.value = value
+        self.comment = comment
+
+    @staticmethod
+    def from_line(line):
+        name, value, comment = line[:8].strip(), line[9:31].strip(), line[32:].strip()
+        return Property(name, value, comment)
+
+    def __str__(self):
+        return '%8s = %24s / %s' % (self.name, self.value, self.comment)
+
+def skip_ws_lines(f):
+    while not file_peek(f, 80).strip():
+        f.read(80)
+
+def is_extension(f):
+    return file_peek(f, 8) == 'XTENSION'
+
+def read_section(f):
+    data = f.read(2880)
+    properties = {}
+    for line in (''.join(x).strip() for x in zip(*[iter(data)] * 80)):
+        if line == 'END':
+            return properties
+
+        if not line.startswith('COMMENT'):
+            prop = Property.from_line(line)
+            properties[prop.name] = prop
+
+with open(in_file) as f:
+    properties = read_section(f)
+    extensions = {}
+    while is_extension(f):
+        props = read_section(f)
+        extensions[props['XTENSION'].value.strip("'")] = props
+
+    if mode == 'headers':
+        print('\n'.join(str(x) for x in properties.values()))
+        for name, ext in extensions.items():
+            print('* extension %s:' % name)
+            print('\n'.join(str(x) for x in ext.values()))
+    elif mode == 'header':
+        if len(option_to_print) > 1:
+            if option_to_print[0] not in extensions:
+                print('no extension named %s in %s' % (option_to_print[0], in_file), file=sys.stderr)
+                sys.exit(1)
+            props = extensions[option_to_print[0]]
+        else:
+            props = properties
+        print(props[option_to_print[-1]].value)
+    else:
+        sys.stdout.write(f.read())
