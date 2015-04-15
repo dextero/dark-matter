@@ -1,0 +1,169 @@
+#!/bin/bash
+
+set -e
+
+if [[ "$EUID" != 0 ]]; then
+    echo "must run as root" 2>&1
+    exit 1
+fi
+
+function on_exit() {
+    [[ "$CLEAN_FINISH" -eq 1 ]] \
+        || echo "provisioning failed" >&2
+}
+
+trap on_exit EXIT
+
+NUM_PROCESSORS=$(nproc)
+
+function merge_dirs() {
+    local SRC="$1"
+    local DST="$2"
+
+    if [[ -L "$SRC" ]]; then
+        return 0
+    fi
+
+    if ls "$SRC"/*; then
+        cp -rf "$SRC/"* "$DST/"
+    fi
+    rm -rf "$SRC"
+    ln -s "$DST" "$SRC"
+}
+
+function is() {
+    [[ -f "/opt/stochastyczne/$1" ]] \
+        && grep "$2" "/opt/stochastyczne/$1" >/dev/null 2>&1 \
+        && echo "$2: $1" >&2 \
+        || echo "$2: not $1" >&2
+}
+
+function mark() {
+    if ! is installed $@; then
+        echo "$2: marking as $1" >&2
+        echo "$2" >> "/opt/stochastyczne/$1"
+    fi
+}
+
+merge_dirs /usr/local/include /usr/include
+merge_dirs /usr/local/lib /usr/lib
+
+mkdir -p /opt/stochastyczne
+chown vagrant:vagrant /opt/stochastyczne
+chown vagrant:vagrant /root
+cd /opt/stochastyczne
+ln -fsT /opt/stochastyczne /home/vagrant/stochastyczne
+
+apt-get update
+apt-get install -y \
+    build-essential \
+    g++ \
+    git \
+    libboost-dev \
+    libcfitsio3-dev \
+    libfftw3-dev \
+    libgsl0-dev \
+    libicu52 \
+    libsqlite3-dev \
+    libtclap-dev \
+    mayavi2 \
+    python-dev \
+    python-matplotlib \
+    python-numpy \
+    python-pip \
+    python-scipy \
+    scons \
+    subversion \
+    vim
+
+pip install numpy
+
+if ! is compiled lenstools; then
+    rm -rf LensTools
+
+    sudo -u vagrant bash <<END
+        git clone https://github.com/apetri/LensTools
+        pushd LensTools
+            git checkout cd4d0c2df908e1f6e2e89cf31d6ea2cb6f66ce27
+            python setup.py build
+            chown vagrant -R .
+            chgrp vagrant -R .
+        popd
+END
+
+        mark compiled lenstools
+fi
+if ! is installed lenstools; then
+    pushd LensTools
+        python setup.py install
+    popd
+    mark installed lenstools
+fi
+
+if ! is compiled tmv; then
+    rm -rf tmv-cpp-read-only
+
+    sudo -u vagrant bash <<END
+        svn checkout http://tmv-cpp.googlecode.com/svn/tags/v0.72/ tmv-cpp-read-only
+        pushd tmv-cpp-read-only
+            scons -j$NUM_PROCESSORS
+        popd
+END
+
+        mark compiled tmv
+fi
+if ! is installed tmv; then
+    pushd tmv-cpp-read-only
+        scons install PREFIX=/usr/local
+    popd
+    mark installed tmv
+fi
+
+if ! is compiled shapelens; then
+    rm -rf shapelens
+
+    sudo -u vagrant bash <<END
+        git clone http://github.com/pmelchior/shapelens
+        pushd shapelens
+            make SPECIAL_FLAGS=-fPIC -j$NUM_PROCESSORS
+        popd
+END
+
+    mark compiled shapelens
+fi
+if ! is installed shapelens; then
+    pushd shapelens
+        make PREFIX=/usr/local install
+    popd
+    mark installed shapelens
+fi
+
+if ! is compiled skylens; then
+    rm -rf skylens
+
+    sudo -u vagrant bash <<END
+        #git clone http://github.com/pmelchior/skylens
+        git clone http://github.com/dextero/skylens
+        pushd skylens
+            make -j$NUM_PROCESSORS
+        popd
+END
+
+    mark compiled skylens
+fi
+
+if ! is installed skylens; then
+    pushd skylens
+        make PREFIX=/usr/local install
+    popd
+    mark installed skylens
+fi
+
+sudo -u vagrant bash <<END
+    cd
+    [[ ! -d dark-matter ]] \
+        && git clone http://github.com/dextero/dark-matter \
+        || true
+END
+
+CLEAN_FINISH=1
