@@ -94,7 +94,8 @@ void do_fft2(std::istream& in,
              size_t in_width,
              size_t in_height,
              std::ostream& out,
-             bool is_little_endian)
+             bool in_little_endian,
+             bool out_little_endian)
 {
     fprintf(stderr, "reading %zu x %zu image\n", in_width, in_height);
     std::vector<gsl_complex_float> buffer(in_width * in_height);
@@ -103,12 +104,16 @@ void do_fft2(std::istream& in,
                 sizeof(GSL_REAL(buffer[i])));
     }
 
-    if (!is_little_endian) {
+    if (!in_little_endian) {
         switch_endianness(buffer);
     }
 
     fprintf(stderr, "performing FFT\n");
     fft2(buffer, in_width, in_height);
+
+    if (!out_little_endian) {
+        switch_endianness(buffer);
+    }
 
     fprintf(stderr, "generating output\n");
     out.write((const char*)&buffer[0],
@@ -119,19 +124,24 @@ void do_ifft2(std::istream& in,
               size_t in_width,
               size_t in_height,
               std::ostream& out,
-              bool is_little_endian)
+              bool in_little_endian,
+              bool out_little_endian)
 {
     fprintf(stderr, "reading %zu x %zu image\n", in_width, in_height);
     std::vector<gsl_complex_float> buffer(in_width * in_height);
     in.read((char*)&buffer[0],
             buffer.size() * sizeof(buffer[0]));
 
-    if (!is_little_endian) {
+    if (!in_little_endian) {
         switch_endianness(buffer);
     }
 
     fprintf(stderr, "performing inverse FFT\n");
     ifft2(buffer, in_width, in_height);
+
+    if (!out_little_endian) {
+        switch_endianness(buffer);
+    }
 
     fprintf(stderr, "generating output\n");
     for (size_t i = 0; i < buffer.size(); ++i) {
@@ -150,16 +160,20 @@ try {
                 "\n"
                 "  -i - perform inverse FFT\n"
                 "  -b - interpret input as big endian\n"
+                "  -B - generate output in big endian\n"
             ) % argv[0]).str());
     }
 
     bool inverse = false;
-    bool is_little_endian = true;
+    bool in_little_endian = true;
+    bool out_little_endian = true;
     while (argc > 1 && argv[1][0] == '-') {
         if (argv[1] == "-i"s) {
             inverse = true;
         } else if (argv[1] == "-b"s) {
-            is_little_endian = false;
+            in_little_endian = false;
+        } else if (argv[1] == "-B"s) {
+            out_little_endian = false;
         }
 
         std::swap(argv[0], argv[1]);
@@ -181,7 +195,8 @@ try {
                                    lexical_cast<size_t>(argv[1]),
                                    lexical_cast<size_t>(argv[2]),
                                    std::cout,
-                                   is_little_endian);
+                                   in_little_endian,
+                                   out_little_endian);
 
     return 0;
 } catch (std::exception& e) {

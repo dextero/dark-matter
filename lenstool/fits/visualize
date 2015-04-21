@@ -2,6 +2,8 @@
 
 set -e
 
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
 function print_usage() {
     echo "usage: $0 [ options ] [ in_file ]"
     echo ""
@@ -10,17 +12,22 @@ function print_usage() {
     echo "  -l, --little-endian - interpret data as little-endian floats (default)"
     echo "  -b, --big-endian    - interpret data as big-endian floats"
     echo "  -o, --output FILE   - save output image to FILE"
+    echo "  -f, --fits          - read IN_FILE as FITS"
+    echo "  -F, --fits-fft      - read IN_FILE as fourier-transformed FITS"
     echo ""
 }
 
 ENDIANNESS='<'
 IN_FILE='/dev/stdin'
 OUTPUT_PNG="$(mktemp).png"
+FITS=''
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
     '-l'|'--little-endian') ENDIANNESS='<' ;;
     '-b'|'--big-endian')    ENDIANNESS='>' ;;
+    '-f'|'--fits')          FITS='fits' ;;
+    '-F'|'--fits-fft')      FITS='fits-fft' ;;
     '-o'|'--output')
         shift
         OUTPUT_PNG="$1"
@@ -37,8 +44,31 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+if [[ "$FITS" ]]; then
+    if [[ "$IN_FILE" == '/dev/stdin' ]]; then
+        TMPFILE="$(mktemp)"
+        cat "$IN_FILE" > "$TMPFILE"
+        IN_FILE="$TMPFILE"
+    fi
+
+    if [[ "$FITS" == 'fits-fft' ]]; then
+        TMPFILE="$(mktemp)"
+
+        WIDTH="$($SCRIPT_DIR/fits-get header NAXIS1 "$IN_FILE")"
+        HEIGHT="$($SCRIPT_DIR/fits-get header NAXIS2 "$IN_FILE")"
+        "$SCRIPT_DIR/fft" -b -i "$WIDTH" "$HEIGHT" "$IN_FILE" > "$TMPFILE"
+
+        IN_FILE="$TMPFILE"
+    fi
+fi
+
+if [[ "$FITS" -eq 1 ]]; then
+    WIDTH="$($SCRIPT_DIR/fits-get header NSIZE1)"
+    HEIGHT="$($SCRIPT_DIR/fits-get header NSIZE2)"
+fi
+
 TMPFILE="$(mktemp)"
-./decode.py "${ENDIANNESS}f" "$IN_FILE" | ./make-2d > "$TMPFILE"
+"$SCRIPT_DIR/decode.py" "${ENDIANNESS}f" "$IN_FILE" | "$SCRIPT_DIR/make-2d" > "$TMPFILE"
 gnuplot <<EOF
 set term png size 1920, 1080
 set output "$OUTPUT_PNG"
