@@ -54,13 +54,13 @@ if [[ "$FITS" ]]; then
         IN_FILE="$TMPFILE"
     fi
 
+    TMPFILE="$(mktemp)"
+    "$SCRIPT_DIR/fits-get" data "$IN_FILE" > "$TMPFILE"
+    IN_FILE="$TMPFILE"
+
     if [[ "$FITS" == 'fits-fft' ]]; then
         TMPFILE="$(mktemp)"
-
-        WIDTH="$($SCRIPT_DIR/fits-get header NAXIS1 "$IN_FILE")"
-        HEIGHT="$($SCRIPT_DIR/fits-get header NAXIS2 "$IN_FILE")"
         "$SCRIPT_DIR/fft" -b -i "$WIDTH" "$HEIGHT" "$IN_FILE" > "$TMPFILE"
-
         IN_FILE="$TMPFILE"
     fi
 fi

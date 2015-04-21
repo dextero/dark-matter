@@ -28,7 +28,7 @@ elif len(sys.argv) > 1 and sys.argv[1] != '-':
 def find_dims(total):
     x = int(math.sqrt(total))
 
-    while x > 0:
+    while x > 1:
         y = total / x
         if x * y == total:
             return x, y

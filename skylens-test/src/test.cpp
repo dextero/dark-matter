@@ -90,14 +90,14 @@ int main(int argc, char** argv)
     }();
 
     std::cerr << NUM_LENSES << " lenses\n";
-            
+
     std::cerr << "initializing telescope\n";
     Telescope telescope(TELESCOPE_CONFIG, TELESCOPE_FILTER);
     std::cerr << "initializing observation\n";
     Observation observation(telescope, EXPOSURE_TIME_S);
     observation.computeTransmittance(0.0, 0.0);
     observation.createSkyFluxLayer(1.0);
-    
+
     std::cerr << "loading params\n";
     LensingLayer::Parameters params = load(LENS_ANGLE_FILE);
     params.z_source = 1.0 + NUM_LENSES;

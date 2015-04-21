@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import sys
+
+
+if len(sys.argv) < 3:
+    print("usage: %s width height [ in_file ]" % (sys.argv[0],))
+    sys.exit(1)
+
+WIDTH = int(sys.argv[1])
+HEIGHT = int(sys.argv[2])
+IN_FILE = sys.argv[3] if len(sys.argv) > 3 else '/dev/stdin'
+
+sys.stdout.write('% -8s=% 21s / % -47s' % ('SIMPLE', 'T', ''))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('BITPIX', '-64', ''))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('NAXIS', '2', ''))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('NAXIS1', WIDTH, ''))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('NAXIS2', HEIGHT, ''))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('H0', '70.0', 'Hubble constant in km/s*Mpc'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('H', '0.7', 'Dimensionless Hubble constant'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('OMEGA_M', '0.26', 'Dark Matter density'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('OMEGA_L', '0.74', 'Dark Energy density'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('W0', '-1.0', 'Dark Energy equation of state'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('WA', '0.0', 'Dark Energy running equation of state'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('Z', '2.038226374816849', 'Redshift of the lens plane'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('CHI', '3799.424143856433', 'Comoving distance in Mpc/h'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('ANGLE', '3.5', 'Side angle in degrees'))
+sys.stdout.write('% -8s=% 21s / % -47s' % ('NPART', '42048768.0', 'Number of particles on the plane'))
+sys.stdout.write('% -80s' % ('END',))
+sys.stdout.write(' ' * (2880 - 16*80))
+
+with open(IN_FILE) as f:
+    sys.stdout.write(f.read())
