@@ -34,11 +34,14 @@ def find_dims(total):
             return x, y
         x -= 1
 
+    raise ValueError('cannot determine input image dimensions (size = %d)' % (total,))
+
 with open(in_file) as f:
     floats = [ float(x.strip()) for x in f.readlines() ]
 
     if not size:
         size = find_dims(len(floats))
+
     if len(floats) < size[0] * size[1]:
         print('invalid dimensions (%d x %d, but %d values in data)' % (size + (len(floats),)), file=sys.stderr)
         sys.exit(1)
