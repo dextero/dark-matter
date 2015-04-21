@@ -45,6 +45,9 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [[ "$FITS" ]]; then
+    WIDTH="$("$SCRIPT_DIR/fits-get" header NAXIS1 "$IN_FILE")"
+    HEIGHT="$("$SCRIPT_DIR/fits-get" header NAXIS2 "$IN_FILE")"
+
     if [[ "$IN_FILE" == '/dev/stdin' ]]; then
         TMPFILE="$(mktemp)"
         cat "$IN_FILE" > "$TMPFILE"
@@ -62,17 +65,13 @@ if [[ "$FITS" ]]; then
     fi
 fi
 
-if [[ "$FITS" -eq 1 ]]; then
-    WIDTH="$($SCRIPT_DIR/fits-get header NSIZE1)"
-    HEIGHT="$($SCRIPT_DIR/fits-get header NSIZE2)"
-fi
-
 TMPFILE="$(mktemp)"
-"$SCRIPT_DIR/decode.py" "${ENDIANNESS}f" "$IN_FILE" | "$SCRIPT_DIR/make-2d" > "$TMPFILE"
+"$SCRIPT_DIR/decode" "${ENDIANNESS}f" "$IN_FILE" | "$SCRIPT_DIR/make-2d" $WIDTH $HEIGHT > "$TMPFILE"
 gnuplot <<EOF
-set term png size 1920, 1080
+set term png size 1000, 1000
 set output "$OUTPUT_PNG"
-plot '$TMPFILE' using 1:2:3 with image
+set view map
+splot '$TMPFILE' using 1:2:3 with image
 EOF
 
 eog "$OUTPUT_PNG"
