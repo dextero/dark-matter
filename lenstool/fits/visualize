@@ -1,0 +1,52 @@
+#!/bin/bash
+
+set -e
+
+function print_usage() {
+    echo "usage: $0 [ options ] [ in_file ]"
+    echo ""
+    echo "options:"
+    echo "  -h, --help          - print this message and exit"
+    echo "  -l, --little-endian - interpret data as little-endian floats (default)"
+    echo "  -b, --big-endian    - interpret data as big-endian floats"
+    echo "  -o, --output FILE   - save output image to FILE"
+    echo ""
+}
+
+ENDIANNESS='<'
+IN_FILE='/dev/stdin'
+OUTPUT_PNG="$(mktemp).png"
+
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+    '-l'|'--little-endian') ENDIANNESS='<' ;;
+    '-b'|'--big-endian')    ENDIANNESS='>' ;;
+    '-o'|'--output')
+        shift
+        OUTPUT_PNG="$1"
+        ;;
+    '-h'|'--help')
+        print_usage
+        exit 1
+        ;;
+    *)
+        IN_FILE="$1"
+        ;;
+    esac
+
+    shift
+done
+
+TMPFILE="$(mktemp)"
+./decode.py "${ENDIANNESS}f" "$IN_FILE" | ./make-2d > "$TMPFILE"
+gnuplot <<EOF
+set term png size 1920, 1080
+
+set dgrid3d 64, 64
+set hidden3d
+
+set output "$OUTPUT_PNG"
+splot '$TMPFILE' using 1:2:3 with lines
+EOF
+
+eog "$OUTPUT_PNG"
