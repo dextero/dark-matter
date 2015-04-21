@@ -41,12 +41,9 @@ TMPFILE="$(mktemp)"
 ./decode.py "${ENDIANNESS}f" "$IN_FILE" | ./make-2d > "$TMPFILE"
 gnuplot <<EOF
 set term png size 1920, 1080
-
-set dgrid3d 64, 64
-set hidden3d
-
 set output "$OUTPUT_PNG"
-splot '$TMPFILE' using 1:2:3 with lines
+plot '$TMPFILE' using 1:2:3 with image
 EOF
 
 eog "$OUTPUT_PNG"
+

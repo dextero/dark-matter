@@ -78,16 +78,33 @@ void ifft2(std::vector<gsl_complex_float>& data,
     }
 }
 
+void switch_endianness(std::vector<gsl_complex_float>& in)
+{
+    fprintf(stderr, "switching endianness\n");
+    for (size_t i = 0; i < in.size(); ++i) {
+        char *buf = (char*)&in[i];
+        std::swap(buf[0], buf[3]);
+        std::swap(buf[1], buf[2]);
+        std::swap(buf[4], buf[7]);
+        std::swap(buf[5], buf[6]);
+    }
+}
+
 void do_fft2(std::istream& in,
              size_t in_width,
              size_t in_height,
-             std::ostream& out)
+             std::ostream& out,
+             bool is_little_endian)
 {
     fprintf(stderr, "reading %zu x %zu image\n", in_width, in_height);
     std::vector<gsl_complex_float> buffer(in_width * in_height);
     for (size_t i = 0; i < in_width * in_height; ++i) {
         in.read((char*)&GSL_REAL(buffer[i]),
                 sizeof(GSL_REAL(buffer[i])));
+    }
+
+    if (!is_little_endian) {
+        switch_endianness(buffer);
     }
 
     fprintf(stderr, "performing FFT\n");
@@ -101,20 +118,25 @@ void do_fft2(std::istream& in,
 void do_ifft2(std::istream& in,
               size_t in_width,
               size_t in_height,
-              std::ostream& out)
+              std::ostream& out,
+              bool is_little_endian)
 {
     fprintf(stderr, "reading %zu x %zu image\n", in_width, in_height);
     std::vector<gsl_complex_float> buffer(in_width * in_height);
     in.read((char*)&buffer[0],
             buffer.size() * sizeof(buffer[0]));
 
+    if (!is_little_endian) {
+        switch_endianness(buffer);
+    }
+
     fprintf(stderr, "performing inverse FFT\n");
     ifft2(buffer, in_width, in_height);
 
     fprintf(stderr, "generating output\n");
     for (size_t i = 0; i < buffer.size(); ++i) {
-        out.write((const char*)&GSL_REAL(buffer[i]),
-                  sizeof(GSL_REAL(buffer[i])));
+         out.write((const char*)&GSL_REAL(buffer[i]),
+                   sizeof(GSL_REAL(buffer[i])));
     }
 }
 
@@ -123,15 +145,26 @@ void do_ifft2(std::istream& in,
 int main(int argc, char** argv)
 try {
     if (argc < 3) {
-        throw critical_error((boost::format("usage: %1% WIDTH HEIGHT [ INPUT_FILE ]") % argv[0]).str());
+        throw critical_error((boost::format(
+                "usage: %1% [ -i ] [ -b ] WIDTH HEIGHT [ INPUT_FILE ]\n"
+                "\n"
+                "  -i - perform inverse FFT\n"
+                "  -b - interpret input as big endian\n"
+            ) % argv[0]).str());
     }
 
     bool inverse = false;
-    if (argv[1] == "-i"s) {
+    bool is_little_endian = true;
+    while (argc > 1 && argv[1][0] == '-') {
+        if (argv[1] == "-i"s) {
+            inverse = true;
+        } else if (argv[1] == "-b"s) {
+            is_little_endian = false;
+        }
+
         std::swap(argv[0], argv[1]);
         ++argv;
         --argc;
-        inverse = true;
     }
 
     std::unique_ptr<std::ifstream> in(new std::ifstream());
@@ -147,7 +180,8 @@ try {
     (inverse ? do_ifft2 : do_fft2)(*in_ptr,
                                    lexical_cast<size_t>(argv[1]),
                                    lexical_cast<size_t>(argv[2]),
-                                   std::cout);
+                                   std::cout,
+                                   is_little_endian);
 
     return 0;
 } catch (std::exception& e) {
