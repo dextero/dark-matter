@@ -117,6 +117,27 @@ public class Lens {
         return new Ray(intersectionPoint, refractedDir);
     }
 
+    private Ray refract(Ray ray,
+                        Vector3D nearSphereCenter,
+                        Vector3D nearIntersectionPoint,
+                        Vector3D farSphereCenter) {
+        final double AIR_REFRACTIVE_INDEX = 1.0;
+        final double GLASS_REFRACTIVE_INDEX = 1.5;
+
+        Vector3D nearSphereNormal = nearIntersectionPoint.subtract(nearSphereCenter).normalize();
+        Ray insideRay = refractOnSphereSurface(ray, nearSphereNormal, nearIntersectionPoint, AIR_REFRACTIVE_INDEX, GLASS_REFRACTIVE_INDEX);
+        if (insideRay == null) {
+            return null;
+        }
+
+        Vector3D farSphereIntersection = raySphereIntersection(insideRay, farSphereCenter, radius);
+        assert(farSphereIntersection != null);
+
+        // intentionally points towards the sphere center
+        Vector3D farSphereNormal = farSphereCenter.subtract(farSphereIntersection).normalize();
+        return refractOnSphereSurface(ray, farSphereNormal, farSphereIntersection, GLASS_REFRACTIVE_INDEX, AIR_REFRACTIVE_INDEX);
+    }
+
     public Ray refract(Ray ray) {
         assert(ray != null);
 
@@ -124,9 +145,6 @@ public class Lens {
             System.err.println("ray " + ray + " does not hit lens " + this);
             return ray;
         }
-
-        final double AIR_REFRACTIVE_INDEX = 1.0;
-        final double GLASS_REFRACTIVE_INDEX = 1.5;
 
         double sphereCenterOffset = getSphereCenterOffset();
         Vector3D firstSphereCenter = new Vector3D(center.getX(), center.getY(), center.getZ() + sphereCenterOffset);
@@ -139,31 +157,9 @@ public class Lens {
         assert(secondIntersectionPoint != null);
 
         if (firstIntersectionPoint.distanceSq(ray.getOrigin()) < secondIntersectionPoint.distanceSq(ray.getOrigin())) {
-            Vector3D firstSphereNormal = firstIntersectionPoint.subtract(firstSphereCenter).normalize();
-            Ray insideRay = refractOnSphereSurface(ray, firstSphereNormal, firstIntersectionPoint, AIR_REFRACTIVE_INDEX, GLASS_REFRACTIVE_INDEX);
-            if (insideRay == null) {
-                return null;
-            }
-
-            Vector3D secondSphereIntersection = raySphereIntersection(insideRay, secondSphereCenter, radius);
-            assert(secondSphereIntersection != null);
-
-            // intentionally points towards the sphere center
-            Vector3D secondSphereNormal = secondSphereCenter.subtract(secondSphereIntersection).normalize();
-            return refractOnSphereSurface(ray, secondSphereNormal, secondSphereIntersection, GLASS_REFRACTIVE_INDEX, AIR_REFRACTIVE_INDEX);
+            return refract(ray, firstSphereCenter, firstIntersectionPoint, secondSphereCenter);
         } else {
-            Vector3D secondSphereNormal = secondIntersectionPoint.subtract(secondSphereCenter).normalize();
-            Ray insideRay = refractOnSphereSurface(ray, secondSphereNormal, secondIntersectionPoint, AIR_REFRACTIVE_INDEX, GLASS_REFRACTIVE_INDEX);
-            if (insideRay == null) {
-                return null;
-            }
-
-            Vector3D firstSphereIntersection = raySphereIntersection(insideRay, firstSphereCenter, radius);
-            assert(firstSphereIntersection != null);
-
-            // intentionally points towards the sphere center
-            Vector3D firstSphereNormal = firstSphereCenter.subtract(firstSphereIntersection).normalize();
-            return refractOnSphereSurface(ray, firstSphereNormal, firstSphereIntersection, GLASS_REFRACTIVE_INDEX, AIR_REFRACTIVE_INDEX);
+            return refract(ray, secondSphereCenter, secondIntersectionPoint, firstSphereCenter);
         }
     }
 
