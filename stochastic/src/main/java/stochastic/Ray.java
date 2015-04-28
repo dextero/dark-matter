@@ -8,7 +8,7 @@ public class Ray {
 
 	public Ray(Vector3D origin, Vector3D dir) {
 		this.origin = origin;
-		this.dir = dir;
+		this.dir = dir.normalize();
 	}
 	
 	public Vector3D getOrigin() {
@@ -17,5 +17,13 @@ public class Ray {
 	
 	public Vector3D getDir() {
 		return dir;
+	}
+
+	@Override
+	public String toString() {
+		return "Ray{" +
+				"origin=" + origin +
+				", dir=" + dir +
+				'}';
 	}
 }

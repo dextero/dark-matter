@@ -166,3 +166,4 @@ cscope.in.out
 cscope.po.out
 
 
+.vagrant/
