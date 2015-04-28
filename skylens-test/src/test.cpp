@@ -9,7 +9,7 @@
 
 #define EXPOSURE_TIME_S 2000
 
-#define LENS_ANGLE_FILE "data/snap11_potentialPlane0_normal0.fits"
+#define LENS_ANGLE_FILE "data/test.fits"
 
 #define COSMOLOGY_FILE "data/cosmology.conf"
 
