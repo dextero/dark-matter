@@ -70,6 +70,11 @@ public class Lens {
                         Vector3D nearSphereCenter,
                         Vector3D nearIntersectionPoint,
                         Vector3D farSphereCenter) {
+        assert ray != null;
+        assert nearSphereCenter != null;
+        assert nearIntersectionPoint != null;
+        assert farSphereCenter != null;
+
         final double AIR_REFRACTIVE_INDEX = 1.0;
         final double GLASS_REFRACTIVE_INDEX = 1.5;
 
@@ -80,7 +85,7 @@ public class Lens {
         }
 
         Vector3D farSphereIntersection = Geometry.raySphereIntersection(insideRay, farSphereCenter, radius);
-        assert(farSphereIntersection != null);
+        assert farSphereIntersection != null;
 
         // intentionally points towards the sphere center
         Vector3D farSphereNormal = farSphereCenter.subtract(farSphereIntersection).normalize();
@@ -102,8 +107,8 @@ public class Lens {
         Vector3D firstIntersectionPoint = Geometry.raySphereIntersection(ray, firstSphereCenter, radius);
         Vector3D secondIntersectionPoint = Geometry.raySphereIntersection(ray, secondSphereCenter, radius);
 
-        assert(firstIntersectionPoint != null);
-        assert(secondIntersectionPoint != null);
+        assert firstIntersectionPoint != null;
+        assert secondIntersectionPoint != null;
 
         if (firstIntersectionPoint.distanceSq(ray.getOrigin()) < secondIntersectionPoint.distanceSq(ray.getOrigin())) {
             return refract(ray, firstSphereCenter, firstIntersectionPoint, secondSphereCenter);

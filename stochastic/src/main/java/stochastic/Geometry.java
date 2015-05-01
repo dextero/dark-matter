@@ -23,36 +23,26 @@ public class Geometry {
         Vector3D rayOrigin = ray.getOrigin();
         Vector3D rayDir = ray.getDir();
 
-        Vector3D rayToSphere = sphereCenter.subtract(rayOrigin);
-        if (rayToSphere.dotProduct(rayDir) < 0) {
-            // ray inside the sphere
-            double rayToSphereDistance = rayToSphere.getNorm();
-            if (rayToSphereDistance > sphereRadius) {
-                return null;
-            } else if (rayToSphereDistance == sphereRadius) {
-                return rayOrigin;
-            } else {
-                Vector3D centerProjectionOntoRayLine = projectOntoLine(sphereCenter, rayOrigin, rayDir);
-                double projectionToCenterDistance = centerProjectionOntoRayLine.distance(sphereCenter);
-                double projectionToIntersectionDistance = Math.sqrt(sphereRadius * sphereRadius - projectionToCenterDistance);
-                double rayOriginToIntersectionDistance = projectionToIntersectionDistance - centerProjectionOntoRayLine.distance(rayOrigin);
-                return rayOrigin.add(rayOriginToIntersectionDistance, rayDir);
-            }
-        } else {
-            Vector3D centerProjectionOntoRayLine = projectOntoLine(sphereCenter, rayOrigin, rayDir);
-            if (centerProjectionOntoRayLine.distance(sphereCenter) > sphereRadius) {
-                return null;
-            } else {
-                double projectionToCenterDistance = centerProjectionOntoRayLine.distance(sphereCenter);
-                double projectionToIntersectionDistance = Math.sqrt(sphereRadius * sphereRadius - projectionToCenterDistance);
-                double rayOriginToIntersectionDistance = centerProjectionOntoRayLine.subtract(rayOrigin).getNorm();
-                if (rayToSphere.getNorm() > sphereRadius) {
-                    rayOriginToIntersectionDistance -= projectionToIntersectionDistance;
-                } else {
-                    rayOriginToIntersectionDistance += projectionToIntersectionDistance;
-                }
+        Vector3D sphereToRay = rayOrigin.subtract(sphereCenter);
+        double a = rayDir.dotProduct(rayDir);
+        double b = rayDir.scalarMultiply(2.0).dotProduct(sphereToRay);
+        double c = sphereToRay.dotProduct(sphereToRay) - sphereRadius * sphereRadius;
 
-                return rayOrigin.add(rayOriginToIntersectionDistance, rayDir);
+        double det = b * b - 4.0 * a * c;
+        if (det < 0.0) {
+            return null;
+        } else {
+            double t0 = -b - Math.sqrt(det);
+            double t1 = -b + Math.sqrt(det);
+
+            double t = Math.min(t0, t1);
+            if (t < 0.0) {
+                t = Math.max(t0, t1);
+            }
+            if (t < 0.0) {
+                return null;
+            } else {
+                return rayOrigin.add(t, rayDir);
             }
         }
     }
