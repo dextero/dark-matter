@@ -3,7 +3,7 @@ package stochastic;
 /**
  * Created by dex on 01.05.15.
  */
-public class Angle {
+public class Angle implements Comparable<Angle> {
     private double radians;
 
     private Angle(double radians) {
@@ -32,5 +32,15 @@ public class Angle {
 
     public double getDegrees() {
         return radiansToDegrees(radians);
+    }
+
+    @Override
+    public int compareTo(Angle o) {
+        return (int) Math.signum(radians - o.radians);
+    }
+
+    @Override
+    public String toString() {
+        return radians + " rad (" + getDegrees() + " deg)";
     }
 }

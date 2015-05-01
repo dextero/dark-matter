@@ -4,19 +4,20 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 public class Screen {
-    Range<PhiTheta> angleRange;
-    int resolutionX;
-    int resolutionY;
+    final Range<PhiTheta> angleRange;
+    final double sphereRadius;
+    final int resolutionX;
+    final int resolutionY;
 
     public Screen(Range<PhiTheta> angleRange,
+                  double sphereRadius,
                   int resolutionX,
                   int resolutionY) {
         assert resolutionX > 0;
         assert resolutionY > 0;
-        assert angleRange.getMin().getPhi().getRadians() < angleRange.getMax().getPhi().getRadians();
-        assert angleRange.getMin().getTheta().getRadians() < angleRange.getMax().getTheta().getRadians();
 
         this.angleRange = angleRange;
+        this.sphereRadius = sphereRadius;
         this.resolutionX = resolutionX;
         this.resolutionY = resolutionY;
     }
@@ -35,13 +36,14 @@ public class Screen {
     }
 
     public PhiTheta getRayCollisionPosAngles(Ray ray) {
-        Vector3D intersection = Geometry.raySphereIntersection(ray, Vector3D.ZERO, 1.0);
+        Vector3D intersection = Geometry.raySphereIntersection(ray, Vector3D.ZERO, sphereRadius);
 
         if (intersection == null) {
             return null;
         }
 
         PhiTheta angles = new PhiTheta(intersection);
+        System.err.println(angles);
         return contains(angles) ? angles : null;
     }
 

@@ -2,7 +2,6 @@ package stochastic;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
-import javax.xml.soap.SAAJResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -52,18 +51,20 @@ public class LensSimulator {
     }
 
 	public static void main(String[] args) {
-        final int NUM_LENSES = 100;
+        final int NUM_LENSES = 0;
         final Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 100.0);
         final int MAX_RAYS = 10000;
-        final Range<Angle> PHI_RADIANS = new Range<>(Angle.fromRadians(1.25 * Math.PI),
-                                                     Angle.fromRadians(1.75 * Math.PI));
-        final Range<Angle> THETA_RADIANS = new Range<>(Angle.fromRadians(-0.25 * Math.PI),
-                                                       Angle.fromRadians(0.25 * Math.PI));
+        final Range<Angle> PHI_RADIANS = new Range<>(Angle.fromRadians(1.4999 * Math.PI),
+                                                     Angle.fromRadians(1.5001 * Math.PI));
+        final Range<Angle> THETA_RADIANS = new Range<>(Angle.fromRadians(-0.0001 * Math.PI),
+                                                       Angle.fromRadians(0.0001 * Math.PI));
         final Range<PhiTheta> SCREEN_ANGLE_RANGE = new Range<>(new PhiTheta(Angle.fromRadians(0.25 * Math.PI),
                                                                             Angle.fromRadians(-0.25 * Math.PI)),
                                                                new PhiTheta(Angle.fromRadians(0.75 * Math.PI),
                                                                             Angle.fromRadians(0.25 * Math.PI)));
-        Screen screen = new Screen(SCREEN_ANGLE_RANGE, 800, 600);
+        final double SCREEN_SPHERE_RADIUS = 10.0;
+
+        Screen screen = new Screen(SCREEN_ANGLE_RANGE, SCREEN_SPHERE_RADIUS, 800, 600);
 
         LensConfigurationSettings settings = new LensConfigurationSettings();
         settings.x = new Range<>(-10.0, 10.0);
@@ -80,10 +81,15 @@ public class LensSimulator {
         for (int i = 0; i < MAX_RAYS; i++) {
             Angle phi = Utils.nextScaledAngle(random, PHI_RADIANS);
             Angle theta = Utils.nextScaledAngle(random, THETA_RADIANS);
+            phi = Angle.fromRadians(1.5 * Math.PI);
+            theta = Angle.fromRadians(0.0);
             Vector3D rayDir = new PhiTheta(phi, theta).toPosition();
 
-            Ray input = new Ray(LIGHT_SOURCE, LIGHT_SOURCE.add(rayDir));
+            Ray input = new Ray(LIGHT_SOURCE, rayDir);
             Ray output = sim.simulate(input);
+
+            System.err.println("input " + input);
+            System.err.println("output " + output);
 
             PhiTheta screenRayCollisionPosAngles = screen.getRayCollisionPosAngles(output);
             if (screenRayCollisionPosAngles != null) {
