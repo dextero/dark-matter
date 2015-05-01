@@ -11,6 +11,11 @@ public class LensSimulation {
     public LensSimulation(List<Lens> lensList) {
         this.lensList = lensList;
         Collections.sort(this.lensList, (a, b) -> (int)Math.signum(a.getCenter().getZ() - b.getCenter().getZ()));
+
+        for (int i = 1; i < this.lensList.size(); i++) {
+            assert !Utils.almostEqual(this.lensList.get(i - 1).getCenter().getZ(),
+                                      this.lensList.get(i).getCenter().getZ());
+        }
     }
 
     public Ray simulate(Ray inputRay) {
