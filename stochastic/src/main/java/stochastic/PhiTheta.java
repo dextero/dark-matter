@@ -23,8 +23,6 @@ public class PhiTheta implements Comparable<PhiTheta> {
 
         this.phi = Angle.fromRadians(Math.atan2(pos.getZ(), pos.getX()));
         this.theta = Angle.fromRadians(Math.asin(pos.getY() / pos.getNorm()));
-
-        System.err.println("from pos: " + pos + " = " + this);
     }
 
     public Angle getPhi() {

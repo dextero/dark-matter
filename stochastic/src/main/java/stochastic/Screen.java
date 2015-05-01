@@ -27,7 +27,7 @@ public class Screen {
         double minPhi = angleRange.getMin().getPhi().getRadians();
         double maxPhi = angleRange.getMax().getPhi().getRadians();
 
-        double theta = angles.getPhi().getRadians();
+        double theta = angles.getTheta().getRadians();
         double minTheta = angleRange.getMin().getTheta().getRadians();
         double maxTheta = angleRange.getMax().getTheta().getRadians();
 
