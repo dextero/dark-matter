@@ -1,6 +1,8 @@
 package stochastic;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
+import stochastic.visualizer.ScreenVisualizer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +79,7 @@ public class LensSimulator {
         LensSimulation sim = new LensSimulation(generateRandomLensConfiguration(NUM_LENSES, settings));
 
         List<Vector3D> imagePositionsOnScreen = new ArrayList<>();
+        List<Vector2D> pointsOnScreen = new ArrayList<>();
 
         for (int i = 0; i < MAX_RAYS; i++) {
             Angle phi = Utils.nextScaledAngle(random, PHI_RADIANS);
@@ -89,6 +92,7 @@ public class LensSimulator {
             PhiTheta screenRayCollisionPosAngles = screen.getRayCollisionPosAngles(output);
             if (screenRayCollisionPosAngles != null) {
                 imagePositionsOnScreen.add(screenRayCollisionPosAngles.toPosition());
+                pointsOnScreen.add(screen.anglesToPixel(screenRayCollisionPosAngles));
             }
         }
 
@@ -96,5 +100,7 @@ public class LensSimulator {
             System.out.println("hit: " + pos);
         }
         System.out.println("total hits: " + imagePositionsOnScreen.size() + " / " + MAX_RAYS);
+
+        new ScreenVisualizer(pointsOnScreen, screen.resolutionX, screen.resolutionY).setVisible(true);
     }
 }

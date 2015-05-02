@@ -4,10 +4,10 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 public class Screen {
-    final Range<PhiTheta> angleRange;
-    final double sphereRadius;
-    final int resolutionX;
-    final int resolutionY;
+    public final Range<PhiTheta> angleRange;
+    public final double sphereRadius;
+    public final int resolutionX;
+    public final int resolutionY;
 
     public Screen(Range<PhiTheta> angleRange,
                   double sphereRadius,
