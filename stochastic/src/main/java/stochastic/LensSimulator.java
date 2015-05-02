@@ -101,6 +101,6 @@ public class LensSimulator {
         }
         System.out.println("total hits: " + imagePositionsOnScreen.size() + " / " + MAX_RAYS);
 
-        new ScreenVisualizer(pointsOnScreen, screen.resolutionX, screen.resolutionY).setVisible(true);
+//        new ScreenVisualizer(pointsOnScreen, screen.resolutionX, screen.resolutionY).setVisible(true);
     }
 }

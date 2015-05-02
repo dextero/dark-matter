@@ -21,12 +21,12 @@ public class ScreenVisualizer extends JFrame {
                             int resolutionY) throws HeadlessException {
         super("ScreenVisualizer");
 
-        Collections.copy(this.points, points);
+        this.points.addAll(points);
         this.resolutionX = resolutionX;
         this.resolutionY = resolutionY;
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        pack();
+        setSize(1440, 900);
     }
 
     @Override

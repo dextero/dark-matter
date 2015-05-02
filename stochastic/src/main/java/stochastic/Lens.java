@@ -1,27 +1,28 @@
 package stochastic;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
+import stochastic.visualizer.SimulationVisualizer;
 
 public class Lens {
 	private Vector3D center;
 	/**
 	 * Radius of the sphere the lens shares surface with
 	 */
-	private double radius;
-	private double lensHeight;
+	public final double radius;
+	public final double height;
 
-    public Lens(Vector3D center, double radius, double lensHeight) {
+    public Lens(Vector3D center, double radius, double height) {
         this.center = center;
         this.radius = radius;
-        this.lensHeight = lensHeight;
+        this.height = height;
     }
 
     public Vector3D getCenter() {
         return center;
     }
 
-    private double getSphereCenterOffset() {
-        return Math.sqrt(radius * radius - lensHeight * lensHeight / 4.0);
+    public double getSphereCenterOffset() {
+        return Math.sqrt(radius * radius - height * height / 4.0);
     }
 
     private boolean rayHitsLens(Ray ray) {
@@ -38,7 +39,7 @@ public class Lens {
         }
 
         Vector3D lensPlaneCollisionPoint = rayOrigin.add(lensPlaneCollisionDistance, rayDirNormalized);
-        return lensPlaneCollisionPoint.distance(center) <= lensHeight / 2.0;
+        return lensPlaneCollisionPoint.distance(center) <= height / 2.0;
 
     }
 
@@ -61,7 +62,8 @@ public class Lens {
 
         Vector3D refractedDir = ray.getDir()
                 .scalarMultiply(refractiveIndexRatio)
-                .add(sphereNormalAtIntersectionPoint.scalarMultiply(refractiveIndexRatio * cosSrcAngleToNormal - Math.sqrt(1.0 - sinDstAngleToNormalSq)));
+                .add(sphereNormalAtIntersectionPoint.scalarMultiply(refractiveIndexRatio * cosSrcAngleToNormal - Math.sqrt(
+                        1.0 - sinDstAngleToNormalSq)));
 
         return new Ray(intersectionPoint, refractedDir);
     }
@@ -122,7 +124,7 @@ public class Lens {
         return "Lens{" +
                 "center=" + center +
                 ", radius=" + radius +
-                ", lensHeight=" + lensHeight +
+                ", height=" + height +
                 '}';
     }
 }
