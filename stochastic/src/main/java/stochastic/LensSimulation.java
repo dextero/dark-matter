@@ -9,6 +9,7 @@ import java.util.List;
 
 public class LensSimulation {
 	private final List<Lens> lensList = new ArrayList<Lens>();
+    private final List<Ray> simulationSteps = new ArrayList<>();
 
     public LensSimulation(List<Lens> lensList) {
         this.lensList.addAll(lensList);
@@ -26,39 +27,27 @@ public class LensSimulation {
 
     public Ray simulate(Ray inputRay) {
 		Ray ray = inputRay;
+        simulationSteps.add(ray);
         try {
             for (Lens lens : lensList) {
                 ray = lens.refract(ray);
                 if (ray == null) {
                     return null;
                 }
+                simulationSteps.add(lens.getIntermediateRay());
+                simulationSteps.add(ray);
             }
         } catch (AssertionError e) {
-            SimulationVisualizer.show(this, inputRay);
+            SimulationVisualizer.show(this);
             return ray;
         }
 
 		return ray;
 	}
 
-    public List<Ray> simulationSteps(Ray inputRay) {
-        List<Ray> intermediateRays = new ArrayList<>();
-        intermediateRays.add(inputRay);
-
-        Ray ray = inputRay;
-        for (Lens lens : lensList) {
-            try {
-                ray = lens.refract(ray);
-            } catch (AssertionError e) {
-                ray = null;
-            }
-
-            if (ray == null) {
-                break;
-            }
-        }
-
-        return intermediateRays;
+    public List<Ray> getSimulationSteps() {
+        assert !simulationSteps.isEmpty();
+        return simulationSteps;
     }
 
     public Range<Double> getXRange() {

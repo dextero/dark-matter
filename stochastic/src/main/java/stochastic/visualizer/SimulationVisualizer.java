@@ -17,13 +17,21 @@ import java.util.Collections;
  */
 public class SimulationVisualizer extends JFrame implements KeyListener {
     private final LensSimulation simulation;
-    private final Ray inputRay;
     private final Range<Double> simulationX;
     private final Range<Double> simulationY;
     private final Range<Double> simulationZ;
 
-    private SimulationVisualizer(LensSimulation simulation,
-                                 Ray inputRay) throws HeadlessException {
+    class WindowCoords extends Vector2D
+    {
+        public WindowCoords(double x_3d, double z_3d) {
+            super(translateZ(z_3d), translateX(x_3d));
+        }
+
+        public int getWindowX() { return (int)getX(); }
+        public int getWindowY() { return (int)getY(); }
+    }
+
+    private SimulationVisualizer(LensSimulation simulation) throws HeadlessException {
         super("SimulationVisualizer");
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -31,10 +39,9 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
         addKeyListener(this);
 
         this.simulation = simulation;
-        this.inputRay = inputRay;
         this.simulationX = simulation.getXRange();
         this.simulationY = simulation.getYRange();
-        this.simulationZ = new Range<>(-1.0, inputRay.getOrigin().getZ() + 1.0);
+        this.simulationZ = new Range<>(-1.0, simulation.getSimulationSteps().get(0).getOrigin().getZ() + 1.0);
 
         System.err.println("x: " + simulationX);
         System.err.println("y: " + simulationY);
@@ -51,13 +58,12 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
         }
     }
 
-    public static void show(LensSimulation simulation,
-                            Ray inputRay) {
+    public static void show(LensSimulation simulation) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
-                    new SimulationVisualizer(simulation, inputRay).setVisible(true);
+                    new SimulationVisualizer(simulation).setVisible(true);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }
@@ -74,53 +80,85 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
     }
 
     public int translateX(double x) {
-        return (int)((double)getHeight() / (simulationX.getMax() - simulationX.getMin()) * (x - simulationX.getMin()));
+        return getHeight() - (int)((double)getHeight() / (simulationX.getMax() - simulationX.getMin()) * (x - simulationX.getMin()));
     }
 
     public int translateZ(double z) {
         return (int)((double)getWidth() / (simulationZ.getMax() - simulationZ.getMin()) * (z - simulationZ.getMin()));
     }
 
+    private void drawLensArc(Graphics g,
+                             Vector3D sphereCenter,
+                             double sphereRadius,
+                             Angle arcStart,
+                             Angle arcEnd,
+                             Angle step) {
+        int prevX = translateZ(Math.cos(arcStart.getRadians()) * sphereRadius + sphereCenter.getZ());
+        int prevY = translateX(Math.sin(arcStart.getRadians()) * sphereRadius + sphereCenter.getX());
+
+        for (Angle angle = Angle.fromRadians(arcStart.getRadians() + step.getRadians());
+             angle.compareTo(arcEnd) <= 0;
+             angle = Angle.fromRadians(angle.getRadians() + step.getRadians())) {
+            int x = translateZ(Math.cos(angle.getRadians()) * sphereRadius + sphereCenter.getZ());
+            int y = translateX(Math.sin(angle.getRadians()) * sphereRadius + sphereCenter.getX());
+
+            g.drawLine(prevX, prevY, x, y);
+
+            prevX = x;
+            prevY = y;
+        }
+
+        int x = translateZ(Math.cos(arcEnd.getRadians()) * sphereRadius + sphereCenter.getZ());
+        int y = translateX(Math.sin(arcEnd.getRadians()) * sphereRadius + sphereCenter.getX());
+        g.drawLine(prevX, prevY, x, y);
+    }
+
     private void drawLens(Graphics g,
                           Lens lens) {
         Vector3D center = lens.getCenter();
         double sphereCenterOffset = lens.getSphereCenterOffset();
-        Vector2D sphereTopLeft = new Vector2D(center.getX() - lens.radius,
-                                              center.getY() - lens.radius);
 
-        int sphereX = translateX(sphereTopLeft.getX());
-        int firstSphereZ = translateZ(center.getZ() + sphereCenterOffset - lens.radius);
-        int secondSphereZ = translateZ(center.getZ() - sphereCenterOffset - lens.radius);
-        int diameterX = (int)scaleX(lens.radius * 2.0);
-        int diameterZ = (int)scaleZ(lens.radius * 2.0);
+        Vector3D firstSphereCenter = new Vector3D(center.getX(), center.getY(), center.getZ() - sphereCenterOffset);
+        Vector3D secondSphereCenter = new Vector3D(center.getX(), center.getY(), center.getZ() + sphereCenterOffset);
 
         Angle angleDelta = Angle.fromRadians(Math.atan(lens.height / 2.0 / sphereCenterOffset));
 
         g.setColor(Color.BLUE);
-        g.drawArc(firstSphereZ, sphereX, diameterZ, diameterX,
-                  180 + (int) -angleDelta.getDegrees(), (int) (2.0 * angleDelta.getDegrees()));
-
-        g.drawArc(secondSphereZ, sphereX, diameterZ, diameterX,
-                  (int) -angleDelta.getDegrees(), (int) (2.0 * angleDelta.getDegrees()));
+        drawLensArc(g, firstSphereCenter, lens.radius,
+                    Angle.fromRadians(-angleDelta.getRadians()),
+                    Angle.fromRadians(angleDelta.getRadians()),
+                    Angle.fromRadians(0.01));
+        drawLensArc(g, secondSphereCenter, lens.radius,
+                    Angle.fromRadians(Math.PI - angleDelta.getRadians()),
+                    Angle.fromRadians(Math.PI + angleDelta.getRadians()),
+                    Angle.fromRadians(0.01));
     }
 
     private void drawRay(Graphics g,
                          Ray ray,
                          Vector3D end)
     {
-        if (end == null) {
-            end = ray.getOrigin().add(1000.0, ray.getDir());
-        }
-
+        markPoint(g, ray.getOrigin(), Color.RED);
         g.setColor(Color.RED);
-        g.drawLine(translateZ(ray.getOrigin().getZ()), translateX(ray.getOrigin().getX()),
-                   translateZ(end.getZ()), translateX(end.getX()));
+
+        if (end == null) {
+            end = ray.getOrigin().add(2.0, ray.getDir());
+
+            Graphics2D g2d = (Graphics2D)g.create();
+            g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0));
+            g2d.drawLine(translateZ(ray.getOrigin().getZ()), translateX(ray.getOrigin().getX()),
+                       translateZ(end.getZ()), translateX(end.getX()));
+            g2d.dispose();
+        } else {
+            g.drawLine(translateZ(ray.getOrigin().getZ()), translateX(ray.getOrigin().getX()),
+                       translateZ(end.getZ()), translateX(end.getX()));
+        }
     }
 
     private void markPoint(Graphics g,
                            Vector3D point,
                            Color color) {
-        int POINT_SIZE = 16;
+        int POINT_SIZE = 10;
 
         int x = translateZ(point.getZ()) - POINT_SIZE / 2;
         int y = translateX(point.getX()) - POINT_SIZE / 2;
@@ -131,29 +169,34 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
 
     @Override
     public void paint(Graphics g) {
-        g.clearRect(0, 0, getWidth(), getHeight());
+        try {
+            g.clearRect(0, 0, getWidth(), getHeight());
 
-        for (Lens lens : simulation.getLensList()) {
-            drawLens(g, lens);
+            for (Lens lens : simulation.getLensList()) {
+                drawLens(g, lens);
+            }
+
+            java.util.List<Ray> rays = simulation.getSimulationSteps();
+            for (int i = 0; i < rays.size() - 1; i++) {
+                drawRay(g, rays.get(i), rays.get(i + 1).getOrigin());
+            }
+            drawRay(g, rays.get(rays.size() - 1), null);
+
+            markPoint(g, Vector3D.ZERO, Color.GREEN);
+            markPoint(g, rays.get(0).getOrigin(), Color.ORANGE);
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
         }
-
-        java.util.List<Ray> rays = simulation.simulationSteps(inputRay);
-        for (int i = 0; i < rays.size() - 1; i++) {
-            drawRay(g, rays.get(i), rays.get(i + 1).getOrigin());
-        }
-        drawRay(g, rays.get(rays.size() - 1), null);
-
-        markPoint(g, Vector3D.ZERO, Color.GREEN);
-        markPoint(g, rays.get(0).getOrigin(), Color.ORANGE);
     }
 
     public static void main(String[] args) {
         java.util.List<Lens> lenses = new ArrayList<>();
-        lenses.add(new Lens(new Vector3D(3.0, 3.0, 5.0), 70.0, 10.0));
+        lenses.add(new Lens(new Vector3D(4.5, 0.0, 5.0), 11.0, 10.0));
 
         LensSimulation sim = new LensSimulation(lenses);
         Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(0.0, 0.0, -1.0));
+        sim.simulate(inputRay);
 
-        SimulationVisualizer.show(sim, inputRay);
+        SimulationVisualizer.show(sim);
     }
 }

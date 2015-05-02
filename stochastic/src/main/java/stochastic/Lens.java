@@ -10,6 +10,7 @@ public class Lens {
 	 */
 	public final double radius;
 	public final double height;
+    private Ray intermediateRay;
 
     public Lens(Vector3D center, double radius, double height) {
         this.center = center;
@@ -81,11 +82,16 @@ public class Lens {
         final double GLASS_REFRACTIVE_INDEX = 1.5;
 
         Vector3D nearSphereNormal = nearIntersectionPoint.subtract(nearSphereCenter).normalize();
-        Ray insideRay = refractOnSphereSurface(ray, nearSphereNormal, nearIntersectionPoint, AIR_REFRACTIVE_INDEX, GLASS_REFRACTIVE_INDEX);
+        Ray insideRay = refractOnSphereSurface(ray,
+                                               nearSphereNormal,
+                                               nearIntersectionPoint,
+                                               AIR_REFRACTIVE_INDEX,
+                                               GLASS_REFRACTIVE_INDEX);
         if (insideRay == null) {
             return null;
         }
 
+        intermediateRay = insideRay;
         Vector3D farSphereIntersection = Geometry.raySphereIntersection(insideRay, farSphereCenter, radius);
         assert farSphereIntersection != null;
 
@@ -117,6 +123,11 @@ public class Lens {
         } else {
             return refract(ray, secondSphereCenter, secondIntersectionPoint, firstSphereCenter);
         }
+    }
+
+    public Ray getIntermediateRay() {
+        assert intermediateRay != null;
+        return intermediateRay;
     }
 
     @Override
