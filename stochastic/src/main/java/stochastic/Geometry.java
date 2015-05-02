@@ -32,18 +32,18 @@ public class Geometry {
         if (det < 0.0) {
             return null;
         } else {
-            double t0 = -b - Math.sqrt(det);
-            double t1 = -b + Math.sqrt(det);
+            double t0 = (-b - Math.sqrt(det)) / 2.0;
+            double t1 = (-b + Math.sqrt(det)) / 2.0;
 
             double t = Math.min(t0, t1);
             if (t < 0.0) {
                 t = Math.max(t0, t1);
+                if (t < 0.0) {
+                    return null;
+                }
             }
-            if (t < 0.0) {
-                return null;
-            } else {
-                return rayOrigin.add(t, rayDir);
-            }
+
+            return rayOrigin.add(t, rayDir);
         }
     }
 }
