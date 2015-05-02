@@ -34,7 +34,8 @@ public class LensSimulation {
                 }
             }
         } catch (AssertionError e) {
-            new SimulationVisualizer(this, inputRay).setVisible(true);
+            SimulationVisualizer.show(this, inputRay);
+            return ray;
         }
 
 		return ray;
@@ -65,11 +66,11 @@ public class LensSimulation {
         double maxX = Double.MIN_VALUE;
 
         for (Lens lens : lensList) {
-            if (lens.getCenter().getX() - lens.radius < minX) {
-                minX = lens.getCenter().getX() - lens.radius;
+            if (lens.getCenter().getX() - lens.height < minX) {
+                minX = lens.getCenter().getX() - lens.height;
             }
-            if (lens.getCenter().getX() + lens.radius > maxX) {
-                maxX = lens.getCenter().getX() + lens.radius;
+            if (lens.getCenter().getX() + lens.height > maxX) {
+                maxX = lens.getCenter().getX() + lens.height;
             }
         }
 
@@ -81,11 +82,11 @@ public class LensSimulation {
         double maxY = Double.MIN_VALUE;
 
         for (Lens lens : lensList) {
-            if (lens.getCenter().getY() - lens.radius < minY) {
-                minY = lens.getCenter().getY() - lens.radius;
+            if (lens.getCenter().getY() - lens.height < minY) {
+                minY = lens.getCenter().getY() - lens.height;
             }
-            if (lens.getCenter().getY() + lens.radius > maxY) {
-                maxY = lens.getCenter().getY() + lens.radius;
+            if (lens.getCenter().getY() + lens.height > maxY) {
+                maxY = lens.getCenter().getY() + lens.height;
             }
         }
 
@@ -97,11 +98,11 @@ public class LensSimulation {
         double maxZ = Double.MIN_VALUE;
 
         for (Lens lens : lensList) {
-            if (lens.getCenter().getZ() - lens.radius < minZ) {
-                minZ = lens.getCenter().getZ() - lens.radius;
+            if (lens.getCenter().getZ() - lens.height < minZ) {
+                minZ = lens.getCenter().getZ() - lens.height;
             }
-            if (lens.getCenter().getZ() + lens.radius > maxZ) {
-                maxZ = lens.getCenter().getZ() + lens.radius;
+            if (lens.getCenter().getZ() + lens.height > maxZ) {
+                maxZ = lens.getCenter().getZ() + lens.height;
             }
         }
 

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 public class LensSimulator {
-    private static Random random = new Random();
+    private static Random random = new Random(8);
 
     static class LensConfigurationSettings
     {
@@ -54,7 +54,7 @@ public class LensSimulator {
 
 	public static void main(String[] args) {
         final int NUM_LENSES = 10;
-        final Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 100.0);
+        final Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 10.0);
         final int MAX_RAYS = 10000;
         final Range<Angle> PHI_RADIANS = new Range<>(Angle.fromRadians(1.25 * Math.PI),
                                                      Angle.fromRadians(1.75 * Math.PI));
@@ -64,16 +64,16 @@ public class LensSimulator {
                                                                             Angle.fromRadians(-0.25 * Math.PI)),
                                                                new PhiTheta(Angle.fromRadians(0.75 * Math.PI),
                                                                             Angle.fromRadians(0.25 * Math.PI)));
-        final double SCREEN_SPHERE_RADIUS = 10.0;
+        final double SCREEN_SPHERE_RADIUS = 1.0;
 
         Screen screen = new Screen(SCREEN_ANGLE_RANGE, SCREEN_SPHERE_RADIUS, 800, 600);
 
         LensConfigurationSettings settings = new LensConfigurationSettings();
         settings.x = new Range<>(-10.0, 10.0);
         settings.y = new Range<>(-10.0, 10.0);
-        settings.z = new Range<>(1.0, 50.0);
-        settings.curvatureRadius = new Range<>(50.0, LIGHT_SOURCE.getZ());
-        settings.height = new Range<>(1.0, 10.0);
+        settings.z = new Range<>(2.0, 8.0);
+        settings.curvatureRadius = new Range<>(2.0, LIGHT_SOURCE.getZ());
+        settings.height = new Range<>(1.0, 1.5);
 
         System.err.println("generating lens simulation");
         LensSimulation sim = new LensSimulation(generateRandomLensConfiguration(NUM_LENSES, settings));
@@ -96,11 +96,11 @@ public class LensSimulator {
             }
         }
 
-        for (Vector3D pos : imagePositionsOnScreen) {
-            System.out.println("hit: " + pos);
-        }
-        System.out.println("total hits: " + imagePositionsOnScreen.size() + " / " + MAX_RAYS);
+//        for (Vector3D pos : imagePositionsOnScreen) {
+//            System.out.println("hit: " + pos);
+//        }
+//        System.out.println("total hits: " + imagePositionsOnScreen.size() + " / " + MAX_RAYS);
 
-//        new ScreenVisualizer(pointsOnScreen, screen.resolutionX, screen.resolutionY).setVisible(true);
+        ScreenVisualizer.show(pointsOnScreen, screen.resolutionX, screen.resolutionY);
     }
 }

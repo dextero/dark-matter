@@ -6,39 +6,75 @@ import stochastic.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
  * Created by dex on 02.05.15.
  */
-public class SimulationVisualizer extends JFrame {
+public class SimulationVisualizer extends JFrame implements KeyListener {
     private final LensSimulation simulation;
     private final Ray inputRay;
     private final Range<Double> simulationX;
     private final Range<Double> simulationY;
     private final Range<Double> simulationZ;
 
-    public SimulationVisualizer(LensSimulation simulation,
-                                Ray inputRay) throws HeadlessException {
+    private SimulationVisualizer(LensSimulation simulation,
+                                 Ray inputRay) throws HeadlessException {
         super("SimulationVisualizer");
+
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setSize(1440, 900);
+        addKeyListener(this);
 
         this.simulation = simulation;
         this.inputRay = inputRay;
         this.simulationX = simulation.getXRange();
         this.simulationY = simulation.getYRange();
-        this.simulationZ = new Range<Double>(-1.0, inputRay.getOrigin().getZ() + 1.0);
+        this.simulationZ = new Range<>(-1.0, inputRay.getOrigin().getZ() + 1.0);
 
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setSize(1440, 900);
+        System.err.println("x: " + simulationX);
+        System.err.println("y: " + simulationY);
+        System.err.println("z: " + simulationZ);
+    }
+
+    @Override public void keyTyped(KeyEvent e) {}
+    @Override public void keyReleased(KeyEvent e) {}
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            dispose();
+        }
+    }
+
+    public static void show(LensSimulation simulation,
+                            Ray inputRay) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    new SimulationVisualizer(simulation, inputRay).setVisible(true);
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public double scaleX(double x) {
+        return x * (double)getHeight() / (simulationX.getMax() - simulationX.getMin());
+    }
+
+    public double scaleZ(double z) {
+        return z * (double)getWidth() / (simulationZ.getMax() - simulationZ.getMin());
     }
 
     public int translateX(double x) {
         return (int)((double)getHeight() / (simulationX.getMax() - simulationX.getMin()) * (x - simulationX.getMin()));
-    }
-
-    public int translateY(double y) {
-        return (int)((double)getHeight() / (simulationY.getMax() - simulationY.getMin()) * (y - simulationY.getMin()));
     }
 
     public int translateZ(double z) {
@@ -51,19 +87,21 @@ public class SimulationVisualizer extends JFrame {
         double sphereCenterOffset = lens.getSphereCenterOffset();
         Vector2D sphereTopLeft = new Vector2D(center.getX() - lens.radius,
                                               center.getY() - lens.radius);
-        double firstSphereZ = center.getZ() + sphereCenterOffset;
-        double secondSphereZ = center.getZ() - sphereCenterOffset;
 
-        Angle angleDelta = Angle.fromRadians(Math.atan(lens.height / lens.radius));
+        int sphereX = translateX(sphereTopLeft.getX());
+        int firstSphereZ = translateZ(center.getZ() + sphereCenterOffset - lens.radius);
+        int secondSphereZ = translateZ(center.getZ() - sphereCenterOffset - lens.radius);
+        int diameterX = (int)scaleX(lens.radius * 2.0);
+        int diameterZ = (int)scaleZ(lens.radius * 2.0);
+
+        Angle angleDelta = Angle.fromRadians(Math.atan(lens.height / 2.0 / sphereCenterOffset));
 
         g.setColor(Color.BLUE);
-        g.drawArc(translateZ(firstSphereZ), translateX(sphereTopLeft.getX()),
-                  (int)(lens.radius * 2.0), (int)(lens.radius * 2.0),
-                  180 + (int)-angleDelta.getDegrees(), (int)(2.0 * angleDelta.getDegrees()));
+        g.drawArc(firstSphereZ, sphereX, diameterZ, diameterX,
+                  180 + (int) -angleDelta.getDegrees(), (int) (2.0 * angleDelta.getDegrees()));
 
-        g.drawArc(translateZ(secondSphereZ), translateX(sphereTopLeft.getX()),
-                  (int)(lens.radius * 2.0), (int)(lens.radius * 2.0),
-                  (int)-angleDelta.getDegrees(), (int)(2.0 * angleDelta.getDegrees()));
+        g.drawArc(secondSphereZ, sphereX, diameterZ, diameterX,
+                  (int) -angleDelta.getDegrees(), (int) (2.0 * angleDelta.getDegrees()));
     }
 
     private void drawRay(Graphics g,
@@ -79,6 +117,18 @@ public class SimulationVisualizer extends JFrame {
                    translateZ(end.getZ()), translateX(end.getX()));
     }
 
+    private void markPoint(Graphics g,
+                           Vector3D point,
+                           Color color) {
+        int POINT_SIZE = 16;
+
+        int x = translateZ(point.getZ()) - POINT_SIZE / 2;
+        int y = translateX(point.getX()) - POINT_SIZE / 2;
+
+        g.setColor(color);
+        g.fillOval(x, y, POINT_SIZE, POINT_SIZE);
+    }
+
     @Override
     public void paint(Graphics g) {
         g.clearRect(0, 0, getWidth(), getHeight());
@@ -92,5 +142,18 @@ public class SimulationVisualizer extends JFrame {
             drawRay(g, rays.get(i), rays.get(i + 1).getOrigin());
         }
         drawRay(g, rays.get(rays.size() - 1), null);
+
+        markPoint(g, Vector3D.ZERO, Color.GREEN);
+        markPoint(g, rays.get(0).getOrigin(), Color.ORANGE);
+    }
+
+    public static void main(String[] args) {
+        java.util.List<Lens> lenses = new ArrayList<>();
+        lenses.add(new Lens(new Vector3D(3.0, 3.0, 5.0), 70.0, 10.0));
+
+        LensSimulation sim = new LensSimulation(lenses);
+        Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(0.0, 0.0, -1.0));
+
+        SimulationVisualizer.show(sim, inputRay);
     }
 }
