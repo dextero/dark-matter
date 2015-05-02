@@ -43,7 +43,6 @@ public class Screen {
         }
 
         PhiTheta angles = new PhiTheta(intersection);
-        System.err.println(angles);
         return contains(angles) ? angles : null;
     }
 
