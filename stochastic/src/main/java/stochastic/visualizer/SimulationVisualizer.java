@@ -1,16 +1,14 @@
 package stochastic.visualizer;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import stochastic.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
+import java.util.List;
 
 /**
  * Created by dex on 02.05.15.
@@ -20,18 +18,10 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
     private final Range<Double> simulationX;
     private final Range<Double> simulationY;
     private final Range<Double> simulationZ;
+    private final java.util.List<java.util.List<Ray>> rayPaths;
 
-    class WindowCoords extends Vector2D
-    {
-        public WindowCoords(double x_3d, double z_3d) {
-            super(translateZ(z_3d), translateX(x_3d));
-        }
-
-        public int getWindowX() { return (int)getX(); }
-        public int getWindowY() { return (int)getY(); }
-    }
-
-    private SimulationVisualizer(LensSimulation simulation) throws HeadlessException {
+    private SimulationVisualizer(LensSimulation simulation,
+                                 java.util.List<java.util.List<Ray>> rayPaths) throws HeadlessException {
         super("SimulationVisualizer");
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -41,7 +31,8 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
         this.simulation = simulation;
         this.simulationX = simulation.getXRange();
         this.simulationY = simulation.getYRange();
-        this.simulationZ = new Range<>(-1.0, simulation.getSimulationSteps().get(0).getOrigin().getZ() + 1.0);
+        this.simulationZ = new Range<>(-1.0, simulation.getRayPath().get(0).getOrigin().getZ() + 1.0);
+        this.rayPaths = rayPaths;
 
         System.err.println("x: " + simulationX);
         System.err.println("y: " + simulationY);
@@ -59,11 +50,19 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
     }
 
     public static void show(LensSimulation simulation) {
+        java.util.List<java.util.List<Ray>> rayPaths = new ArrayList<>();
+        rayPaths.add(simulation.getRayPath());
+
+        show(simulation, rayPaths);
+    }
+
+    public static void show(LensSimulation simulation,
+                            java.util.List<java.util.List<Ray>> rayPaths) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
-                    new SimulationVisualizer(simulation).setVisible(true);
+                    new SimulationVisualizer(simulation, rayPaths).setVisible(true);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }
@@ -140,19 +139,25 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
     {
         markPoint(g, ray.getOrigin(), Color.RED);
         g.setColor(Color.RED);
+        Vector3D start = end;
 
-        if (end == null) {
+        if (end != null) {
             end = ray.getOrigin().add(2.0, ray.getDir());
-
-            Graphics2D g2d = (Graphics2D)g.create();
-            g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0));
-            g2d.drawLine(translateZ(ray.getOrigin().getZ()), translateX(ray.getOrigin().getX()),
-                       translateZ(end.getZ()), translateX(end.getX()));
-            g2d.dispose();
-        } else {
             g.drawLine(translateZ(ray.getOrigin().getZ()), translateX(ray.getOrigin().getX()),
                        translateZ(end.getZ()), translateX(end.getX()));
+            start = end;
+            end = start.add(2.0, ray.getDir());
+        } else {
+            start = ray.getOrigin();
+            end = ray.getOrigin().add(2.0, ray.getDir());
         }
+
+        Graphics2D g2d = (Graphics2D)g.create();
+        g2d.setColor(Color.GRAY);
+        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0));
+        g2d.drawLine(translateZ(start.getZ()), translateX(start.getX()),
+                     translateZ(end.getZ()), translateX(end.getX()));
+        g2d.dispose();
     }
 
     private void markPoint(Graphics g,
@@ -176,14 +181,15 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
                 drawLens(g, lens);
             }
 
-            java.util.List<Ray> rays = simulation.getSimulationSteps();
-            for (int i = 0; i < rays.size() - 1; i++) {
-                drawRay(g, rays.get(i), rays.get(i + 1).getOrigin());
+            for (List<Ray> path : rayPaths) {
+                for (int i = 0; i < path.size() - 1; i++) {
+                    drawRay(g, path.get(i), path.get(i + 1).getOrigin());
+                }
+                drawRay(g, path.get(path.size() - 1), null);
             }
-            drawRay(g, rays.get(rays.size() - 1), null);
 
             markPoint(g, Vector3D.ZERO, Color.GREEN);
-            markPoint(g, rays.get(0).getOrigin(), Color.ORANGE);
+            markPoint(g, rayPaths.get(0).get(0).getOrigin(), Color.ORANGE);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

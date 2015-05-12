@@ -2,6 +2,7 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
+import stochastic.Angle;
 import stochastic.Geometry;
 import stochastic.Ray;
 import stochastic.Utils;
@@ -95,5 +96,20 @@ public class GeometryTest {
         // ray completely missing the sphere
         assertNull(Geometry.raySphereIntersection(new Ray(new Vector3D(0.0, 2.0, 0.0), new Vector3D(1.0, 1.0, 1.0)),
                                                   Vector3D.ZERO, 1.0));
+    }
+
+    @Test
+    public void testRefract() throws Exception {
+        // perpendicular ray
+        assertVectorEquals(new Vector3D(1.0, 0.0, 0.0),
+                           Geometry.refract(new Vector3D(1.0, 0.0, 0.0),
+                                            new Vector3D(-1.0, 0.0, 0.0),
+                                            1.1, 2.0));
+
+        assertVectorEquals(new Vector3D(Math.sqrt(3.0) / 2.0, 0.5, 0.0),
+                           Geometry.refract(new Vector3D(Math.sqrt(2.0) / 2.0, Math.sqrt(2.0) / 2.0, 0.0),
+                                            new Vector3D(-1.0, 0.0, 0.0),
+                                            Math.sqrt(2.0), 2.0));
+
     }
 }

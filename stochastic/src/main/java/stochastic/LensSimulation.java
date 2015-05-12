@@ -1,15 +1,15 @@
 package stochastic;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import stochastic.visualizer.SimulationVisualizer;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 public class LensSimulation {
 	private final List<Lens> lensList = new ArrayList<Lens>();
-    private final List<Ray> simulationSteps = new ArrayList<>();
+    private final List<Ray> rayPath = new ArrayList<>();
 
     public LensSimulation(List<Lens> lensList) {
         this.lensList.addAll(lensList);
@@ -27,74 +27,57 @@ public class LensSimulation {
 
     public Ray simulate(Ray inputRay) {
 		Ray ray = inputRay;
-        simulationSteps.add(ray);
-        try {
-            for (Lens lens : lensList) {
-                ray = lens.refract(ray);
-                if (ray == null) {
-                    return null;
-                }
-                simulationSteps.add(lens.getIntermediateRay());
-                simulationSteps.add(ray);
+        Ray prevRay = inputRay;
+        rayPath.clear();
+        rayPath.add(ray);
+        for (Lens lens : lensList) {
+            ray = lens.refract(ray);
+            if (ray == null) {
+                return null;
+            } else if (ray != prevRay) {
+                rayPath.add(lens.getIntermediateRay());
+                rayPath.add(ray);
             }
-        } catch (AssertionError e) {
-            SimulationVisualizer.show(this);
-            return ray;
+            prevRay = ray;
         }
 
 		return ray;
 	}
 
-    public List<Ray> getSimulationSteps() {
-        assert !simulationSteps.isEmpty();
-        return simulationSteps;
+    public List<Ray> getRayPath() {
+        assert !rayPath.isEmpty();
+        List<Ray> result = new ArrayList<>();
+        result.addAll(rayPath);
+        return result;
+    }
+
+    private Range<Double> getRange(Function<Vector3D, Double> getter) {
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+
+        for (Lens lens : lensList) {
+            double val = getter.apply(lens.getCenter());
+
+            if (val - lens.height < min) {
+                min = val - lens.height;
+            }
+            if (val + lens.height > max) {
+                max = val + lens.height;
+            }
+        }
+
+        return new Range<>(min, max);
     }
 
     public Range<Double> getXRange() {
-        double minX = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE;
-
-        for (Lens lens : lensList) {
-            if (lens.getCenter().getX() - lens.height < minX) {
-                minX = lens.getCenter().getX() - lens.height;
-            }
-            if (lens.getCenter().getX() + lens.height > maxX) {
-                maxX = lens.getCenter().getX() + lens.height;
-            }
-        }
-
-        return new Range<>(minX, maxX);
+        return getRange(Vector3D::getX);
     }
 
     public Range<Double> getYRange() {
-        double minY = Double.MAX_VALUE;
-        double maxY = Double.MIN_VALUE;
-
-        for (Lens lens : lensList) {
-            if (lens.getCenter().getY() - lens.height < minY) {
-                minY = lens.getCenter().getY() - lens.height;
-            }
-            if (lens.getCenter().getY() + lens.height > maxY) {
-                maxY = lens.getCenter().getY() + lens.height;
-            }
-        }
-
-        return new Range<>(minY, maxY);
+        return getRange(Vector3D::getY);
     }
 
     public Range<Double> getZRange() {
-        double minZ = Double.MAX_VALUE;
-        double maxZ = Double.MIN_VALUE;
-
-        for (Lens lens : lensList) {
-            if (lens.getCenter().getZ() - lens.height < minZ) {
-                minZ = lens.getCenter().getZ() - lens.height;
-            }
-            if (lens.getCenter().getZ() + lens.height > maxZ) {
-                maxZ = lens.getCenter().getZ() + lens.height;
-            }
-        }
-
-        return new Range<>(minZ, maxZ);
+        return getRange(Vector3D::getZ);
     }
 }

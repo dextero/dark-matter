@@ -46,4 +46,26 @@ public class Geometry {
             return rayOrigin.add(t, rayDir);
         }
     }
+
+    public static Vector3D refract(Vector3D rayDir,
+                                   Vector3D normal,
+                                   double srcRefractiveIndex,
+                                   double dstRefractiveIndex) {
+        assert Utils.almostEqual(normal.getNorm(), 1.0);
+
+        double refractiveIndexRatio = srcRefractiveIndex / dstRefractiveIndex;
+        double cosSrcAngleToNormal = rayDir.normalize().negate().dotProduct(normal);
+        double sinSrcAngleToNormal = Math.sqrt(1.0 - cosSrcAngleToNormal * cosSrcAngleToNormal);
+
+        if (sinSrcAngleToNormal > dstRefractiveIndex / srcRefractiveIndex) {
+            // total internal reflection
+            System.err.println("refractOnSphereSurface: total internal reflection");
+            return null;
+        }
+
+        double sinDstAngleToNormalSq = refractiveIndexRatio * refractiveIndexRatio * sinSrcAngleToNormal * sinSrcAngleToNormal;
+
+        return rayDir.scalarMultiply(refractiveIndexRatio)
+                     .add(refractiveIndexRatio * cosSrcAngleToNormal - Math.sqrt(1.0 - sinDstAngleToNormalSq), normal);
+    }
 }

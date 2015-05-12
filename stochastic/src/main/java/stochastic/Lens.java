@@ -44,31 +44,6 @@ public class Lens {
 
     }
 
-    private Ray refractOnSphereSurface(Ray ray,
-                                       Vector3D sphereNormalAtIntersectionPoint,
-                                       Vector3D intersectionPoint,
-                                       double srcRefractiveIndex,
-                                       double dstRefractiveIndex) {
-        double refractiveIndexRatio = srcRefractiveIndex / dstRefractiveIndex;
-        double srcAngleToNormal = Math.acos(ray.getDir().normalize().negate().dotProduct(sphereNormalAtIntersectionPoint));
-
-        if (Math.sin(srcAngleToNormal) > dstRefractiveIndex / srcRefractiveIndex) {
-            // total internal reflection
-            System.err.println("refractOnSphereSurface: total internal reflection");
-            return null;
-        }
-
-        double cosSrcAngleToNormal = Math.cos(srcAngleToNormal);
-        double sinDstAngleToNormalSq = refractiveIndexRatio * refractiveIndexRatio * (1.0 - cosSrcAngleToNormal * cosSrcAngleToNormal);
-
-        Vector3D refractedDir = ray.getDir()
-                .scalarMultiply(refractiveIndexRatio)
-                .add(sphereNormalAtIntersectionPoint.scalarMultiply(refractiveIndexRatio * cosSrcAngleToNormal - Math.sqrt(
-                        1.0 - sinDstAngleToNormalSq)));
-
-        return new Ray(intersectionPoint, refractedDir);
-    }
-
     private Ray refract(Ray ray,
                         Vector3D nearSphereCenter,
                         Vector3D nearIntersectionPoint,
@@ -82,22 +57,27 @@ public class Lens {
         final double GLASS_REFRACTIVE_INDEX = 1.5;
 
         Vector3D nearSphereNormal = nearIntersectionPoint.subtract(nearSphereCenter).normalize();
-        Ray insideRay = refractOnSphereSurface(ray,
-                                               nearSphereNormal,
-                                               nearIntersectionPoint,
-                                               AIR_REFRACTIVE_INDEX,
-                                               GLASS_REFRACTIVE_INDEX);
-        if (insideRay == null) {
+        Vector3D refractedDir = Geometry.refract(ray.getDir(),
+                                                 nearSphereNormal,
+                                                 AIR_REFRACTIVE_INDEX,
+                                                 GLASS_REFRACTIVE_INDEX);
+        if (refractedDir == null) {
             return null;
         }
 
+        Ray insideRay = new Ray(nearIntersectionPoint, refractedDir);
         intermediateRay = insideRay;
         Vector3D farSphereIntersection = Geometry.raySphereIntersection(insideRay, farSphereCenter, radius);
+        System.err.println("outside: " + ray + "\ninside: " + insideRay + "\nfarSphereCenter = " + farSphereCenter + "\nradius = " + radius + "\nintersection = " + farSphereIntersection);
         assert farSphereIntersection != null;
 
         // intentionally points towards the sphere center
         Vector3D farSphereNormal = farSphereCenter.subtract(farSphereIntersection).normalize();
-        return refractOnSphereSurface(ray, farSphereNormal, farSphereIntersection, GLASS_REFRACTIVE_INDEX, AIR_REFRACTIVE_INDEX);
+        return new Ray(farSphereIntersection,
+                       Geometry.refract(ray.getDir(),
+                                        farSphereNormal,
+                                        GLASS_REFRACTIVE_INDEX,
+                                        AIR_REFRACTIVE_INDEX));
     }
 
     public Ray refract(Ray ray) {

@@ -2,14 +2,14 @@ package stochastic;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import stochastic.visualizer.ScreenVisualizer;
+import stochastic.visualizer.SimulationVisualizer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class LensSimulator {
-    private static Random random = new Random(8);
+    private static Random random = new Random(7);
 
     static class LensConfigurationSettings
     {
@@ -56,8 +56,8 @@ public class LensSimulator {
         final int NUM_LENSES = 10;
         final Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 10.0);
         final int MAX_RAYS = 10000;
-        final Range<Angle> PHI_RADIANS = new Range<>(Angle.fromRadians(1.25 * Math.PI),
-                                                     Angle.fromRadians(1.75 * Math.PI));
+        final Range<Angle> PHI_RADIANS = new Range<>(Angle.fromRadians(1.5 * Math.PI),
+                                                     Angle.fromRadians(1.50000001 * Math.PI));
         final Range<Angle> THETA_RADIANS = new Range<>(Angle.fromRadians(-0.25 * Math.PI),
                                                        Angle.fromRadians(0.25 * Math.PI));
         final Range<PhiTheta> SCREEN_ANGLE_RANGE = new Range<>(new PhiTheta(Angle.fromRadians(0.25 * Math.PI),
@@ -69,8 +69,8 @@ public class LensSimulator {
         Screen screen = new Screen(SCREEN_ANGLE_RANGE, SCREEN_SPHERE_RADIUS, 800, 600);
 
         LensConfigurationSettings settings = new LensConfigurationSettings();
-        settings.x = new Range<>(-10.0, 10.0);
-        settings.y = new Range<>(-10.0, 10.0);
+        settings.x = new Range<>(-0.1, 0.1);
+        settings.y = new Range<>(-0.1, 0.1);
         settings.z = new Range<>(2.0, 8.0);
         settings.curvatureRadius = new Range<>(2.0, LIGHT_SOURCE.getZ());
         settings.height = new Range<>(1.0, 1.5);
@@ -80,20 +80,26 @@ public class LensSimulator {
 
         List<Vector3D> imagePositionsOnScreen = new ArrayList<>();
         List<Vector2D> pointsOnScreen = new ArrayList<>();
+        List<List<Ray>> rayPaths = new ArrayList<>();
 
-        for (int i = 0; i < MAX_RAYS; i++) {
-            Angle phi = Utils.nextScaledAngle(random, PHI_RADIANS);
-            Angle theta = Utils.nextScaledAngle(random, THETA_RADIANS);
-            Vector3D rayDir = new PhiTheta(phi, theta).toPosition();
+        try {
+            for (int i = 0; i < MAX_RAYS; i++) {
+                Angle phi = Utils.nextScaledAngle(random, PHI_RADIANS);
+                Angle theta = Utils.nextScaledAngle(random, THETA_RADIANS);
+                Vector3D rayDir = new PhiTheta(phi, theta).toPosition();
 
-            Ray input = new Ray(LIGHT_SOURCE, rayDir);
-            Ray output = sim.simulate(input);
+                Ray input = new Ray(LIGHT_SOURCE, rayDir);
+                Ray output = sim.simulate(input);
+                rayPaths.add(sim.getRayPath());
 
-            PhiTheta screenRayCollisionPosAngles = screen.getRayCollisionPosAngles(output);
-            if (screenRayCollisionPosAngles != null) {
-                imagePositionsOnScreen.add(screenRayCollisionPosAngles.toPosition());
-                pointsOnScreen.add(screen.anglesToPixel(screenRayCollisionPosAngles));
+                PhiTheta screenRayCollisionPosAngles = screen.getRayCollisionPosAngles(output);
+                if (screenRayCollisionPosAngles != null) {
+                    imagePositionsOnScreen.add(screenRayCollisionPosAngles.toPosition());
+                    pointsOnScreen.add(screen.anglesToPixel(screenRayCollisionPosAngles));
+                }
             }
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
 
 //        for (Vector3D pos : imagePositionsOnScreen) {
@@ -101,6 +107,7 @@ public class LensSimulator {
 //        }
 //        System.out.println("total hits: " + imagePositionsOnScreen.size() + " / " + MAX_RAYS);
 
-        ScreenVisualizer.show(pointsOnScreen, screen.resolutionX, screen.resolutionY);
+//        ScreenVisualizer.show(pointsOnScreen, screen.resolutionX, screen.resolutionY);
+        SimulationVisualizer.show(sim, rayPaths);
     }
 }
