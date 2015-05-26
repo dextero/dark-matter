@@ -12,7 +12,11 @@ public class Lens {
 	public final double height;
     private Ray intermediateRay;
 
-    public Lens(Vector3D center, double radius, double height) {
+    public Lens(Vector3D center, double radius, double height) throws InvalidArgumentException {
+        if (radius * 2.0 <= height) {
+            throw new InvalidArgumentException("lens height must more than 2 times as large as its radius");
+        }
+
         this.center = center;
         this.radius = radius;
         this.height = height;
@@ -31,17 +35,15 @@ public class Lens {
 
         Vector3D rayOrigin = ray.getOrigin();
         Vector3D rayDirNormalized = ray.getDir();
-        Vector3D rayOriginToLensPlane = new Vector3D(0.0, 0.0, center.getZ() - rayOrigin.getZ());
-        Vector3D rayOriginToLensCenter = center.subtract(rayOrigin);
-        double cosAngle = rayOriginToLensPlane.normalize().dotProduct(rayOriginToLensCenter.normalize());
-        double lensPlaneCollisionDistance = center.distance(rayOrigin) * cosAngle;
-        if (lensPlaneCollisionDistance < 0.0) {
+
+        double rayOriginToLensPlaneZ = center.getZ() - rayOrigin.getZ();
+        if (rayOriginToLensPlaneZ * rayDirNormalized.getZ() <= 0.0) {
             return false;
         }
 
-        Vector3D lensPlaneCollisionPoint = rayOrigin.add(lensPlaneCollisionDistance, rayDirNormalized);
+        double rayDistanceUntilLensPlane = rayOriginToLensPlaneZ / rayDirNormalized.getZ();
+        Vector3D lensPlaneCollisionPoint = rayOrigin.add(rayDistanceUntilLensPlane, rayDirNormalized);
         return lensPlaneCollisionPoint.distance(center) <= height / 2.0;
-
     }
 
     private Ray refract(Ray ray,
@@ -61,14 +63,11 @@ public class Lens {
                                                  nearSphereNormal,
                                                  AIR_REFRACTIVE_INDEX,
                                                  GLASS_REFRACTIVE_INDEX);
-        if (refractedDir == null) {
-            return null;
-        }
+        assert refractedDir != null;
 
         Ray insideRay = new Ray(nearIntersectionPoint, refractedDir);
         intermediateRay = insideRay;
         Vector3D farSphereIntersection = Geometry.raySphereIntersection(insideRay, farSphereCenter, radius);
-        System.err.println("outside: " + ray + "\ninside: " + insideRay + "\nfarSphereCenter = " + farSphereCenter + "\nradius = " + radius + "\nintersection = " + farSphereIntersection);
         assert farSphereIntersection != null;
 
         // intentionally points towards the sphere center
@@ -81,10 +80,9 @@ public class Lens {
     }
 
     public Ray refract(Ray ray) {
-        assert(ray != null);
+        assert ray != null;
 
         if (!rayHitsLens(ray)) {
-//            System.err.println("ray " + ray + " does not hit lens " + this);
             return ray;
         }
 

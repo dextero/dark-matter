@@ -25,20 +25,24 @@ public class Geometry {
 
         Vector3D sphereToRay = rayOrigin.subtract(sphereCenter);
         double a = rayDir.dotProduct(rayDir);
-        double b = rayDir.scalarMultiply(2.0).dotProduct(sphereToRay);
+        double b = 2.0 * rayDir.dotProduct(sphereToRay);
         double c = sphereToRay.dotProduct(sphereToRay) - sphereRadius * sphereRadius;
 
         double det = b * b - 4.0 * a * c;
         if (det < 0.0) {
+            System.err.printf("det = %f\n", det);
+            System.err.println("ray = " + ray + ", sphereCenter = " + sphereCenter + ", sphereRadius = " + sphereRadius);
             return null;
         } else {
-            double t0 = (-b - Math.sqrt(det)) / 2.0;
-            double t1 = (-b + Math.sqrt(det)) / 2.0;
+            double t0 = (-b - Math.sqrt(det)) / 2.0 * a;
+            double t1 = (-b + Math.sqrt(det)) / 2.0 * a;
 
             double t = Math.min(t0, t1);
             if (t < 0.0) {
                 t = Math.max(t0, t1);
                 if (t < 0.0) {
+                    System.err.printf("t0 = %f, t1 = %f\n", t0, t1);
+                    System.err.println("ray = " + ray + ", sphereCenter = " + sphereCenter + ", sphereRadius = " + sphereRadius);
                     return null;
                 }
             }
@@ -47,25 +51,41 @@ public class Geometry {
         }
     }
 
+    public static Vector3D reflect(Vector3D rayDir,
+                                   Vector3D normal) {
+        return rayDir.subtract(normal.scalarMultiply(2.0 * rayDir.dotProduct(normal)));
+    }
+
     public static Vector3D refract(Vector3D rayDir,
                                    Vector3D normal,
                                    double srcRefractiveIndex,
                                    double dstRefractiveIndex) {
         assert Utils.almostEqual(normal.getNorm(), 1.0);
+        assert Utils.almostEqual(rayDir.getNorm(), 1.0);
 
         double refractiveIndexRatio = srcRefractiveIndex / dstRefractiveIndex;
-        double cosSrcAngleToNormal = rayDir.normalize().negate().dotProduct(normal);
+        double cosSrcAngleToNormal = rayDir.negate().dotProduct(normal);
         double sinSrcAngleToNormal = Math.sqrt(1.0 - cosSrcAngleToNormal * cosSrcAngleToNormal);
 
         if (sinSrcAngleToNormal > dstRefractiveIndex / srcRefractiveIndex) {
             // total internal reflection
             System.err.println("refractOnSphereSurface: total internal reflection");
-            return null;
+            System.err.println("rayDir = " + rayDir + ", normal = " + normal + " srcRefractiveIndex = " + srcRefractiveIndex + ", dstRefractiveIndex = " + dstRefractiveIndex);
+            return reflect(rayDir, normal);
         }
 
         double sinDstAngleToNormalSq = refractiveIndexRatio * refractiveIndexRatio * sinSrcAngleToNormal * sinSrcAngleToNormal;
 
         return rayDir.scalarMultiply(refractiveIndexRatio)
                      .add(refractiveIndexRatio * cosSrcAngleToNormal - Math.sqrt(1.0 - sinDstAngleToNormalSq), normal);
+    }
+
+    public static double pointRayDistance(Ray ray,
+                                          Vector3D point) {
+        Vector3D a = ray.getOrigin();
+        Vector3D b = ray.getDir().add(ray.getOrigin());
+        Vector3D aToB = b.subtract(a);
+
+        return aToB.crossProduct(a.subtract(point)).getNorm() / aToB.getNorm();
     }
 }

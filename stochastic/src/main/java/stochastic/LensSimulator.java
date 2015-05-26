@@ -46,7 +46,11 @@ public class LensSimulator {
                 z = Utils.nextScaledFloat(random, settings.z);
             } while (!isZUnique(lenses, z));
 
-            lenses.add(new Lens(new Vector3D(x, y, z), radius, height));
+            try {
+                lenses.add(new Lens(new Vector3D(x, y, z), radius, height));
+            } catch (InvalidArgumentException e) {
+                throw new AssertionError(e);
+            }
         }
 
         return lenses;
@@ -76,7 +80,12 @@ public class LensSimulator {
         settings.height = new Range<>(1.0, 1.5);
 
         System.err.println("generating lens simulation");
-        LensSimulation sim = new LensSimulation(generateRandomLensConfiguration(NUM_LENSES, settings));
+        LensSimulation sim = null;
+        try {
+            sim = new LensSimulation(generateRandomLensConfiguration(NUM_LENSES, settings));
+        } catch (InvalidArgumentException e) {
+            throw new AssertionError(e);
+        }
 
         List<Vector3D> imagePositionsOnScreen = new ArrayList<>();
         List<Vector2D> pointsOnScreen = new ArrayList<>();

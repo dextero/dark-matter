@@ -11,13 +11,15 @@ public class LensSimulation {
 	private final List<Lens> lensList = new ArrayList<Lens>();
     private final List<Ray> rayPath = new ArrayList<>();
 
-    public LensSimulation(List<Lens> lensList) {
+    public LensSimulation(List<Lens> lensList) throws InvalidArgumentException {
         this.lensList.addAll(lensList);
-        Collections.sort(this.lensList, (a, b) -> (int)Math.signum(a.getCenter().getZ() - b.getCenter().getZ()));
+        Collections.sort(this.lensList, (a, b) -> (int)Math.signum(b.getCenter().getZ() - a.getCenter().getZ()));
 
         for (int i = 1; i < this.lensList.size(); i++) {
-            assert !Utils.almostEqual(this.lensList.get(i - 1).getCenter().getZ(),
-                                      this.lensList.get(i).getCenter().getZ());
+            if (Utils.almostEqual(this.lensList.get(i - 1).getCenter().getZ(),
+                                  this.lensList.get(i).getCenter().getZ())) {
+                throw new InvalidArgumentException("lenses must not overlap");
+            }
         }
     }
 

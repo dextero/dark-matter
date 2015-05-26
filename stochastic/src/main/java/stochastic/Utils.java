@@ -1,5 +1,6 @@
 package stochastic;
 
+import java.lang.reflect.Array;
 import java.util.Random;
 
 /**
@@ -23,5 +24,15 @@ public class Utils {
     {
         return Angle.fromRadians(nextScaledFloat(random, new Range<Double>(range.getMin().getRadians(),
                                                                            range.getMax().getRadians())));
+    }
+
+    public static double[] duplicateDoubleArray(double[] array, int n) {
+        double[] ret = new double[n * array.length];
+
+        for (int i = 0; i < n; i++) {
+            System.arraycopy(array, 0, ret, i * array.length, array.length);
+        }
+
+        return ret;
     }
 }

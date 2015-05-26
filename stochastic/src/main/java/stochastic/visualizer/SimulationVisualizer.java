@@ -196,13 +196,18 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
     }
 
     public static void main(String[] args) {
-        java.util.List<Lens> lenses = new ArrayList<>();
-        lenses.add(new Lens(new Vector3D(4.5, 0.0, 5.0), 11.0, 10.0));
+        try {
+            List<Lens> lenses = new ArrayList<>();
+            lenses.add(new Lens(new Vector3D(0.0, 0.0, 3.0), 20.0, 10.0));
+            lenses.add(new Lens(new Vector3D(0.0, 0.0, 7.0), 20.0, 10.0));
 
-        LensSimulation sim = new LensSimulation(lenses);
-        Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(0.0, 0.0, -1.0));
-        sim.simulate(inputRay);
+            LensSimulation sim = new LensSimulation(lenses);
+            Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(0.5, 0.0, -1.0).normalize());
+            sim.simulate(inputRay);
 
-        SimulationVisualizer.show(sim);
+            SimulationVisualizer.show(sim);
+        } catch (InvalidArgumentException e) {
+            e.printStackTrace();
+        }
     }
 }
