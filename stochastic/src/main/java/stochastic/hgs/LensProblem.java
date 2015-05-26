@@ -11,6 +11,7 @@ import org.jage.core.config.ConfigurationException;
 import org.jage.core.config.IConfiguration;
 import stochastic.Angle;
 import stochastic.PhiTheta;
+import stochastic.Range;
 import stochastic.Utils;
 
 import java.util.Arrays;
@@ -19,10 +20,12 @@ import java.util.List;
 public class LensProblem extends AbstractProblem {
     LensProblemFitnessFunction fitnessFunction;
 
-    private static final double[] PARAMETER_LOWER_BOUNDS = new double[] { -1.0, -1.0, 1.0, 0.8, 0.1 };
-    private static final double[] PARAMETER_UPPER_BOUNDS = new double[] { 1.0, 1.0, 9.0, 1.5, 0.5 };
-    private static final Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 10.0);
-
+    private Range<Double> lensPosX = new Range<>(-5.0, 5.0);
+    private Range<Double> lensPosY = new Range<>(0.0, Utils.EPSILON);
+    private Range<Double> lensPosZ = new Range<>(0.5, 0.5 + Utils.EPSILON);
+    private Range<Double> lensRadius = new Range<>(2.0, 10.0);
+    private Range<Double> lensHeight = new Range<>(0.5, 1.5);
+    private final Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 10.0);
     private int numLenses = 2;
 
     public LensProblem(IConfiguration config) throws ConfigurationException {
@@ -46,14 +49,28 @@ public class LensProblem extends AbstractProblem {
 
     @Override
     public IProblemDomain getRootDomain() {
-        double[] lowerBounds = Utils.duplicateDoubleArray(PARAMETER_LOWER_BOUNDS, numLenses);
-        double[] upperBounds = Utils.duplicateDoubleArray(PARAMETER_UPPER_BOUNDS, numLenses);
+        double[] lowerBound = new double[]{
+                lensPosX.getMin(), lensPosY.getMin(), lensPosZ.getMin(),
+                lensRadius.getMin(), lensHeight.getMin()
+        };
+        double[] upperBound = new double[]{
+                lensPosX.getMax(), lensPosY.getMax(), lensPosZ.getMax(),
+                lensRadius.getMax(), lensHeight.getMax()
+        };
 
-        return new RealDomain(numLenses * PARAMETER_LOWER_BOUNDS.length, lowerBounds, upperBounds);
+        assert lowerBound.length == upperBound.length;
+
+        return new RealDomain(lowerBound.length * numLenses,
+                              Utils.duplicateDoubleArray(lowerBound, numLenses),
+                              Utils.duplicateDoubleArray(upperBound, numLenses));
     }
 
     @Override
     public Class getProblemAnnotation() {
         return RealProblem.class;
+    }
+
+    public static void main(String[] args) throws Exception {
+        org.jage.core.AgENode.main(args);
     }
 }

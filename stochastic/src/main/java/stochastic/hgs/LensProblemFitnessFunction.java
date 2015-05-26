@@ -7,6 +7,7 @@ import org.jage.app.hgs.problem.IFitnessFunction;
 import org.jage.app.hgs.problem.IProblemDomain;
 import org.jage.app.hgs.problem.IResolution;
 import org.jage.app.hgs.problem.real.RealChromosome;
+
 import stochastic.*;
 
 import java.util.ArrayList;
