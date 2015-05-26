@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<resourcemanager class="org.jage.resource.SimpleResourceManager">
+  <globalResources>
+    <resource name="HGSConfig" class="org.jage.app.hgs.HGSConfig">
+      <!-- PARAMS -->
+      <minLeonAgentDepth>0</minLeonAgentDepth>
+      <maxLeonAgentDepth>0</maxLeonAgentDepth>
+
+      <maxDepth>2</maxDepth>
+
+      <metaepochEpochsCount>20</metaepochEpochsCount>
+      <metaepochEpochsCountRelativeStandardDeviation>0.1</metaepochEpochsCountRelativeStandardDeviation>
+
+      <agentsComparisonFrequency>18</agentsComparisonFrequency>
+      <agentsComparisonFrequencyRelativeStandardDeviation>0.18</agentsComparisonFrequencyRelativeStandardDeviation>
+
+      <initialSproutAggregate>aggregate1</initialSproutAggregate>
+
+      <!-- STRATEGIES -->
+      <!-- Initialization -->
+      <!-- <InitializationStrategy class="org.jage.app.hgs.strategy.initialization.real.RealInitializationStrategy"/> -->
+      <InitializationStrategy class="org.jage.app.hgs.strategy.initialization.LevelBasedInitializationStrategy">
+        <strategy level="0" class="org.jage.app.hgs.strategy.initialization.real.RealInitializationStrategy"
+          size="100" />
+        <strategy level="1" class="org.jage.app.hgs.strategy.initialization.real.RealInitializationStrategy"
+          size="10" />
+        <strategy level="2" class="org.jage.app.hgs.strategy.initialization.real.RealInitializationStrategy"
+          size="5" />
+        <default-strategy class="org.jage.app.hgs.strategy.initialization.real.RealInitializationStrategy"
+          size="5" />
+      </InitializationStrategy>
+
+      <ResolutionCastStrategy class="org.jage.app.hgs.strategy.resolutioncast.real.RealResolutionCastStrategy" />
+      <InterPopulationStrategy class="org.jage.app.hgs.strategy.interpopulation.BestOnlyInterPopulationStrategy" />
+
+
+      <!-- Pre Sprout Strategies - decide whether to sprout or not -->
+      <!-- <PreSproutStrategy class="org.jage.app.hgs.strategy.presprout.AlwaysSproutStrategy"/> -->
+      <PreSproutStrategy class="org.jage.app.hgs.strategy.presprout.CompoundSproutStrategy">
+        <!-- concurrently executing sprouts limits -->
+        <strategy class="org.jage.app.hgs.strategy.presprout.ConcurrentSproutsCountStrategy">
+          <!-- <strategy level="0" class="org.jage.app.hgs.strategy.common.UnlimitedLevelBasedStrategy" /> -->
+          <strategy level="0" limit="1000"
+          class="org.jage.app.hgs.strategy.common.LimitedLevelBasedStrategy" />
+          <strategy level="1" limit="100"
+          class="org.jage.app.hgs.strategy.common.LimitedLevelBasedStrategy" />
+          <strategy level="2" limit="10"
+          class="org.jage.app.hgs.strategy.common.LimitedLevelBasedStrategy" />
+          <default-strategy limit="1"
+          class="org.jage.app.hgs.strategy.common.LimitedLevelBasedStrategy" />
+         <!--  <default-strategy class="org.jage.app.hgs.strategy.common.UnlimitedLevelBasedStrategy" /> -->
+        </strategy>
+        <!-- other strategies -->
+        <strategy class="org.jage.app.hgs.strategy.presprout.AlwaysSproutStrategy" />
+      </PreSproutStrategy>
+
+      <SubdomainStrategy class="org.jage.app.hgs.strategy.subdomain.real.RealSubdomainNoDivisionStrategy" />
+      <ResultStrategy class="org.jage.app.hgs.strategy.result.SendAlwaysResultStrategy" />
+      <PostSproutStrategy class="org.jage.app.hgs.strategy.postsprout.DomainsTooClosePostSproutStrategy" />
+
+      <!-- Metaepoch strategies -->
+      <PreSelectionStrategy class="org.jage.app.hgs.strategy.preselection.RoulettePreSelectionStrategy"
+        eliteSize="1" />
+
+      <!-- Mutation -->
+      <MutationStrategy class="org.jage.app.hgs.strategy.mutation.LevelBasedMutationStrategy">
+        <strategy level="0" 
+        class="org.jage.app.hgs.strategy.mutation.real.RealMutationStrategy" 
+        mutationRate="0.8" standardDeviation="0.5" />
+        <strategy level="1" 
+        class="org.jage.app.hgs.strategy.mutation.real.RealMutationStrategy" 
+        mutationRate="0.2" standardDeviation="0.03" />
+        <default-strategy 
+        class="org.jage.app.hgs.strategy.mutation.real.RealMutationStrategy"
+        mutationRate="0.08" standardDeviation="0.02" />
+      </MutationStrategy>
+
+      <!-- dotyczy poziomu na ktorym tworzony jest sprout, odleglosci w dziedzinie 0,1 -->
+      <SproutEvaluationStrategy class="org.jage.app.hgs.strategy.sproutevaluation.LevelBasedSproutEvaluationStrategy">
+        <strategy level="0" class="org.jage.app.hgs.strategy.sproutevaluation.TooCloseSproutEvaluationStrategy"
+          standardDeviation="0.3" distanceFactor="1.0" />
+        <strategy level="1" class="org.jage.app.hgs.strategy.sproutevaluation.TooCloseSproutEvaluationStrategy"
+          standardDeviation="0.03" distanceFactor="4.0" />
+        <default-strategy class="org.jage.app.hgs.strategy.sproutevaluation.TooCloseSproutEvaluationStrategy"
+          standardDeviation="0.02" distanceFactor="2.0" />
+      </SproutEvaluationStrategy>
+
+      <RecombinationStrategy class="org.jage.app.hgs.strategy.recombination.real.RealCrossOverRecombinationStrategy"
+        rate="0.99" />
+
+      <PostSelectionStrategy class="org.jage.app.hgs.strategy.postselection.NonePostSelectionStrategy" />
+
+      <LeonAgentMigrationStrategy class="org.jage.app.hgs.strategy.loenagentmigration.CyclicLeonAgentMigrationStrategy" />
+
+      <SelectionNodeToComparisonStrategy
+        class="org.jage.app.hgs.strategy.comparison.SelectFirstSelectionNodeToComparisonStrategy" />
+
+      <NodesComparisonStrategy class="org.jage.app.hgs.strategy.comparison.DoNothingNodesComparisonStrategy" />
+
+      <!-- Stop conditions strategies -->
+
+      <!-- Metaepochs count - stop condition -->
+      <MetaepochsCountStopCondition class="org.jage.app.hgs.strategy.stop.metaepochs.MetaepochsCountStopCondition">
+          <!--<strategy level="0" class="org.jage.app.hgs.strategy.common.UnlimitedLevelBasedStrategy"/ >-->
+        <strategy 
+        	level="0" 
+        	class="org.jage.app.hgs.strategy.common.LimitedLevelBasedStrategy" 
+        	limit="1000" />
+        <!-- <strategy 
+	        level="1" 
+	        class="org.jage.app.hgs.strategy.common.LimitedLevelBasedStrategy" 
+	        limit="100" /> -->
+        <default-strategy class="org.jage.app.hgs.strategy.common.UnlimitedLevelBasedStrategy"/>
+      </MetaepochsCountStopCondition>
+
+      <!-- Total amount of sprouts per node - stop condition -->
+      <MaxSproutsCountStopCondition class="org.jage.app.hgs.strategy.stop.maxsprouts.MaxSproutsStopCondition">
+        <strategy 
+        level="0" 
+        class="org.jage.app.hgs.strategy.common.LimitedLevelBasedStrategy" 
+        limit="10"/>
+        <default-strategy class="org.jage.app.hgs.strategy.common.UnlimitedLevelBasedStrategy" />
+      </MaxSproutsCountStopCondition>
+
+      <!-- Fitness progression - stop condition -->
+      <FitnessProgressionConfig class="org.jage.app.hgs.strategy.stop.fitnessprogression.FitnessProgressionConfig">
+        <LogStrategy class="org.jage.app.hgs.strategy.stop.fitnessprogression.log.LevelBasedFitnessLogStrategy">
+          <strategy level="0"
+          class="org.jage.app.hgs.strategy.stop.fitnessprogression.log.NoFitnessLogStrategy" />    
+          <!--<default-strategy class="org.jage.app.hgs.strategy.stop.fitnessprogression.log.DefaultFitnessLogStrategy" logAverageLength="20"/> -->
+          <default-strategy 
+          class="org.jage.app.hgs.strategy.stop.fitnessprogression.log.DefaultFitnessLogStrategy"
+          logAverageLength="5" />
+        </LogStrategy>
+        <ProgressionEvaluationStrategy
+          class="org.jage.app.hgs.strategy.stop.fitnessprogression.evaluation.LevelBasedProgressionEvaluationStrategy">
+          <default-strategy
+            class="org.jage.app.hgs.strategy.stop.fitnessprogression.evaluation.DefaultFitnessProgressionEvaluationStrategy"
+            epsilon="0" />
+        </ProgressionEvaluationStrategy>
+        <ProgressionDeathStrategy
+          class="org.jage.app.hgs.strategy.stop.fitnessprogression.death.LevelBasedProgressionDeathStrategy">
+          <default-strategy 
+          class="org.jage.app.hgs.strategy.stop.fitnessprogression.death.DefaultProgressionDeathStrategy" />
+        </ProgressionDeathStrategy>
+      </FitnessProgressionConfig>
+
+
+      <!-- PROBLEM -->
+      <!-- Problem class="org.jage.app.hgs.problem.real.schwefel.SchwefelProblem" -->
+      <!-- <Problem class="org.jage.app.hgs.problem.real.griewangk.GriewangkProblem"> -->
+      <!-- <Problem class="org.jage.app.hgs.problem.real.michalewicz.MichalewiczProblem">
+        <dimensions>2</dimensions>
+        <lowerBound>0</lowerBound>
+        <upperBound>3</upperBound>
+      </Problem> -->
+      <Problem class="stochastic.hgs.LensProblem">
+        <dimensions>5</dimensions>
+      </Problem>
+    </resource>
+  </globalResources>
+  <objectResources>
+  </objectResources>
+</resourcemanager>
