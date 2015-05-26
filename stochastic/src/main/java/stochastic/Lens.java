@@ -1,7 +1,6 @@
 package stochastic;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import stochastic.visualizer.SimulationVisualizer;
 
 public class Lens {
 	private Vector3D center;
@@ -46,6 +45,30 @@ public class Lens {
         return lensPlaneCollisionPoint.distance(center) <= height / 2.0;
     }
 
+    private static final double AIR_REFRACTIVE_INDEX = 1.0;
+    private static final double GLASS_REFRACTIVE_INDEX = 1.5;
+
+    private Ray refractInsideLens(Ray ray,
+                                  Vector3D nearSphereCenter,
+                                  Vector3D farSphereCenter) {
+        Vector3D farSphereIntersection = Geometry.raySphereIntersection(ray, farSphereCenter, radius);
+        assert farSphereIntersection != null;
+
+        // intentionally points towards the sphere center
+        Vector3D farSphereNormal = farSphereCenter.subtract(farSphereIntersection).normalize();
+        Vector3D refractedDir = Geometry.refract(ray.getDir(),
+                                                 farSphereNormal,
+                                                 GLASS_REFRACTIVE_INDEX,
+                                                 AIR_REFRACTIVE_INDEX);
+        if (refractedDir == null) {
+            // total internal reflection
+            Ray reflected = new Ray(farSphereIntersection, Geometry.reflect(ray.getDir(), farSphereNormal));
+            return refractInsideLens(reflected, farSphereCenter, nearSphereCenter);
+        }
+
+        return new Ray(farSphereIntersection, refractedDir);
+    }
+
     private Ray refract(Ray ray,
                         Vector3D nearSphereCenter,
                         Vector3D nearIntersectionPoint,
@@ -55,28 +78,20 @@ public class Lens {
         assert nearIntersectionPoint != null;
         assert farSphereCenter != null;
 
-        final double AIR_REFRACTIVE_INDEX = 1.0;
-        final double GLASS_REFRACTIVE_INDEX = 1.5;
-
         Vector3D nearSphereNormal = nearIntersectionPoint.subtract(nearSphereCenter).normalize();
         Vector3D refractedDir = Geometry.refract(ray.getDir(),
                                                  nearSphereNormal,
                                                  AIR_REFRACTIVE_INDEX,
                                                  GLASS_REFRACTIVE_INDEX);
-        assert refractedDir != null;
+        if (refractedDir == null) {
+            // total internal reflection
+            return new Ray(nearIntersectionPoint,
+                           Geometry.reflect(ray.getDir(), nearSphereNormal));
+        }
 
         Ray insideRay = new Ray(nearIntersectionPoint, refractedDir);
         intermediateRay = insideRay;
-        Vector3D farSphereIntersection = Geometry.raySphereIntersection(insideRay, farSphereCenter, radius);
-        assert farSphereIntersection != null;
-
-        // intentionally points towards the sphere center
-        Vector3D farSphereNormal = farSphereCenter.subtract(farSphereIntersection).normalize();
-        return new Ray(farSphereIntersection,
-                       Geometry.refract(ray.getDir(),
-                                        farSphereNormal,
-                                        GLASS_REFRACTIVE_INDEX,
-                                        AIR_REFRACTIVE_INDEX));
+        return refractInsideLens(insideRay, farSphereCenter, nearSphereCenter);
     }
 
     public Ray refract(Ray ray) {

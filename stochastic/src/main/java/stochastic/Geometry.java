@@ -69,9 +69,9 @@ public class Geometry {
 
         if (sinSrcAngleToNormal > dstRefractiveIndex / srcRefractiveIndex) {
             // total internal reflection
-            System.err.println("refractOnSphereSurface: total internal reflection");
-            System.err.println("rayDir = " + rayDir + ", normal = " + normal + " srcRefractiveIndex = " + srcRefractiveIndex + ", dstRefractiveIndex = " + dstRefractiveIndex);
-            return reflect(rayDir, normal);
+//            System.err.println("refractOnSphereSurface: total internal reflection");
+//            System.err.println("rayDir = " + rayDir + ", normal = " + normal + " srcRefractiveIndex = " + srcRefractiveIndex + ", dstRefractiveIndex = " + dstRefractiveIndex);
+            return null;
         }
 
         double sinDstAngleToNormalSq = refractiveIndexRatio * refractiveIndexRatio * sinSrcAngleToNormal * sinSrcAngleToNormal;
