@@ -29,20 +29,28 @@ public class LensSimulation {
 
     public Ray simulate(Ray inputRay) {
 		Ray ray = inputRay;
-        Ray prevRay = inputRay;
+        Ray prevRay = ray;
         rayPath.clear();
-        rayPath.add(ray);
+        System.err.println(ray);
+        System.err.println(rayPath);
+        System.err.println("");
+
         for (Lens lens : lensList) {
+            assert ray != null;
+
             ray = lens.refract(ray);
-            if (ray == null) {
-                return null;
-            } else if (ray != prevRay) {
-                rayPath.add(lens.getIntermediateRay());
+            if (ray != prevRay) {
+                rayPath.addAll(lens.getIntermediateRays());
                 rayPath.add(ray);
             }
+
+            System.err.println(ray);
+            System.err.println(rayPath);
+            System.err.println("");
             prevRay = ray;
         }
 
+        rayPath.add(ray);
 		return ray;
 	}
 

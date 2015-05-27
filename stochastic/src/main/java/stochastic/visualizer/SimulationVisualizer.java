@@ -58,6 +58,7 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
 
     public static void show(LensSimulation simulation,
                             java.util.List<java.util.List<Ray>> rayPaths) {
+        System.err.println("ray path: " + rayPaths.get(0).size());
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -139,16 +140,14 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
     {
         markPoint(g, ray.getOrigin(), Color.RED);
         g.setColor(Color.RED);
-        Vector3D start = end;
+        Vector3D start = ray.getOrigin();
 
         if (end != null) {
-            end = ray.getOrigin().add(2.0, ray.getDir());
             g.drawLine(translateZ(ray.getOrigin().getZ()), translateX(ray.getOrigin().getX()),
                        translateZ(end.getZ()), translateX(end.getX()));
             start = end;
             end = start.add(2.0, ray.getDir());
         } else {
-            start = ray.getOrigin();
             end = ray.getOrigin().add(2.0, ray.getDir());
         }
 
@@ -202,7 +201,7 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
             lenses.add(new Lens(new Vector3D(0.0, 0.0, 7.0), 20.0, 10.0));
 
             LensSimulation sim = new LensSimulation(lenses);
-            Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(0.5, 0.0, -1.0).normalize());
+            Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(0.2, 0.0, -1.0).normalize());
             sim.simulate(inputRay);
 
             SimulationVisualizer.show(sim);

@@ -2,6 +2,9 @@ package stochastic;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Lens {
 	private Vector3D center;
 	/**
@@ -9,7 +12,7 @@ public class Lens {
 	 */
 	public final double radius;
 	public final double height;
-    private Ray intermediateRay;
+    private List<Ray> intermediateRays = new ArrayList<>();
 
     public Lens(Vector3D center, double radius, double height) throws InvalidArgumentException {
         if (radius * 2.0 <= height) {
@@ -51,6 +54,8 @@ public class Lens {
     private Ray refractInsideLens(Ray ray,
                                   Vector3D nearSphereCenter,
                                   Vector3D farSphereCenter) {
+        intermediateRays.add(ray);
+
         Vector3D farSphereIntersection = Geometry.raySphereIntersection(ray, farSphereCenter, radius);
         assert farSphereIntersection != null;
 
@@ -62,6 +67,7 @@ public class Lens {
                                                  AIR_REFRACTIVE_INDEX);
         if (refractedDir == null) {
             // total internal reflection
+            System.err.println("total internal reflection (2)");
             Ray reflected = new Ray(farSphereIntersection, Geometry.reflect(ray.getDir(), farSphereNormal));
             return refractInsideLens(reflected, farSphereCenter, nearSphereCenter);
         }
@@ -78,6 +84,8 @@ public class Lens {
         assert nearIntersectionPoint != null;
         assert farSphereCenter != null;
 
+        intermediateRays.add(ray);
+
         Vector3D nearSphereNormal = nearIntersectionPoint.subtract(nearSphereCenter).normalize();
         Vector3D refractedDir = Geometry.refract(ray.getDir(),
                                                  nearSphereNormal,
@@ -85,17 +93,19 @@ public class Lens {
                                                  GLASS_REFRACTIVE_INDEX);
         if (refractedDir == null) {
             // total internal reflection
+            System.err.println("total internal reflection (1)");
             return new Ray(nearIntersectionPoint,
                            Geometry.reflect(ray.getDir(), nearSphereNormal));
         }
 
         Ray insideRay = new Ray(nearIntersectionPoint, refractedDir);
-        intermediateRay = insideRay;
-        return refractInsideLens(insideRay, farSphereCenter, nearSphereCenter);
+        return refractInsideLens(insideRay, nearSphereCenter, farSphereCenter);
     }
 
     public Ray refract(Ray ray) {
         assert ray != null;
+
+        intermediateRays.clear();
 
         if (!rayHitsLens(ray)) {
             return ray;
@@ -118,9 +128,9 @@ public class Lens {
         }
     }
 
-    public Ray getIntermediateRay() {
-        assert intermediateRay != null;
-        return intermediateRay;
+    public List<Ray> getIntermediateRays() {
+        assert intermediateRays != null;
+        return intermediateRays;
     }
 
     @Override
