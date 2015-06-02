@@ -184,7 +184,10 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
                 for (int i = 0; i < path.size() - 1; i++) {
                     drawRay(g, path.get(i), path.get(i + 1).getOrigin());
                 }
-                drawRay(g, path.get(path.size() - 1), null);
+
+                Ray lastRay = path.get(path.size() - 1);
+                Vector3D endPoint = lastRay.getOrigin().add(lastRay.getDir().scalarMultiply(10.0));
+                drawRay(g, path.get(path.size() - 1), endPoint);
             }
 
             markPoint(g, Vector3D.ZERO, Color.GREEN);

@@ -15,7 +15,7 @@ public class Lens {
     private List<Ray> intermediateRays = new ArrayList<>();
 
     public Lens(Vector3D center, double radius, double height) throws InvalidArgumentException {
-        if (radius * 2.0 <= height) {
+        if (radius * 2.0 < height) {
             throw new InvalidArgumentException("lens height must more than 2 times as large as its radius");
         }
 

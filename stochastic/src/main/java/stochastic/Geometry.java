@@ -64,17 +64,18 @@ public class Geometry {
         assert Utils.almostEqual(rayDir.getNorm(), 1.0);
 
         double refractiveIndexRatio = srcRefractiveIndex / dstRefractiveIndex;
+        double refractiveIndexRatioSq = refractiveIndexRatio * refractiveIndexRatio;
         double cosSrcAngleToNormal = rayDir.negate().dotProduct(normal);
-        double sinSrcAngleToNormal = Math.sqrt(1.0 - cosSrcAngleToNormal * cosSrcAngleToNormal);
+        double sinSrcAngleToNormalSq = 1.0 - cosSrcAngleToNormal * cosSrcAngleToNormal;
 
-        if (sinSrcAngleToNormal > dstRefractiveIndex / srcRefractiveIndex) {
+        if (sinSrcAngleToNormalSq > 1.0 / refractiveIndexRatioSq) {
             // total internal reflection
 //            System.err.println("refractOnSphereSurface: total internal reflection");
 //            System.err.println("rayDir = " + rayDir + ", normal = " + normal + " srcRefractiveIndex = " + srcRefractiveIndex + ", dstRefractiveIndex = " + dstRefractiveIndex);
             return null;
         }
 
-        double sinDstAngleToNormalSq = refractiveIndexRatio * refractiveIndexRatio * sinSrcAngleToNormal * sinSrcAngleToNormal;
+        double sinDstAngleToNormalSq = refractiveIndexRatioSq * sinSrcAngleToNormalSq;
 
         return rayDir.scalarMultiply(refractiveIndexRatio)
                      .add(refractiveIndexRatio * cosSrcAngleToNormal - Math.sqrt(1.0 - sinDstAngleToNormalSq), normal);
