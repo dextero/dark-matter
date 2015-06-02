@@ -19,9 +19,11 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
     private final Range<Double> simulationY;
     private final Range<Double> simulationZ;
     private final java.util.List<java.util.List<Ray>> rayPaths;
+    private final Vector3D lightSource;
 
     private SimulationVisualizer(LensSimulation simulation,
-                                 java.util.List<java.util.List<Ray>> rayPaths) throws HeadlessException {
+                                 java.util.List<java.util.List<Ray>> rayPaths,
+                                 Vector3D lightSource) throws HeadlessException {
         super("SimulationVisualizer");
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -31,8 +33,20 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
         this.simulation = simulation;
         this.simulationX = simulation.getXRange();
         this.simulationY = simulation.getYRange();
-        this.simulationZ = new Range<>(-1.0, simulation.getRayPath().get(0).getOrigin().getZ() + 1.0);
+        if (lightSource == null) {
+            this.simulationZ = new Range<>(-1.0, simulation.getRayPath().get(0).getOrigin().getZ() + 1.0);
+        } else {
+            double min = -1.0;
+            double max = simulation.getRayPath().get(0).getOrigin().getZ() + 1.0;
+            if (lightSource.getZ() - 1.0 < min) {
+                min = lightSource.getZ() - 1.0;
+            } else if (lightSource.getZ() + 1.0 > max) {
+                max = lightSource.getZ() + 1.0;
+            }
+            this.simulationZ = new Range<>(min, max);
+        }
         this.rayPaths = rayPaths;
+        this.lightSource = lightSource;
 
         System.err.println("x: " + simulationX);
         System.err.println("y: " + simulationY);
@@ -58,12 +72,18 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
 
     public static void show(LensSimulation simulation,
                             java.util.List<java.util.List<Ray>> rayPaths) {
+        show(simulation, rayPaths, null);
+    }
+
+    public static void show(LensSimulation simulation,
+                            java.util.List<java.util.List<Ray>> rayPaths,
+                            Vector3D lightSource) {
         System.err.println("ray path: " + rayPaths.get(0).size());
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
-                    new SimulationVisualizer(simulation, rayPaths).setVisible(true);
+                    new SimulationVisualizer(simulation, rayPaths, lightSource).setVisible(true);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }
@@ -190,8 +210,13 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
                 drawRay(g, path.get(path.size() - 1), endPoint);
             }
 
-            markPoint(g, Vector3D.ZERO, Color.GREEN);
-            markPoint(g, rayPaths.get(0).get(0).getOrigin(), Color.ORANGE);
+            if (lightSource == null) {
+                markPoint(g, Vector3D.ZERO, Color.GREEN);
+                markPoint(g, rayPaths.get(0).get(0).getOrigin(), Color.ORANGE);
+            } else {
+                markPoint(g, rayPaths.get(0).get(0).getOrigin(), Color.GREEN);
+                markPoint(g, lightSource, Color.ORANGE);
+            }
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

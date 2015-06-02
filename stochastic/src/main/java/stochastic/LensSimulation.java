@@ -27,7 +27,8 @@ public class LensSimulation {
         return Collections.unmodifiableList(lensList);
     }
 
-    public Ray simulate(Ray inputRay) {
+    public Ray simulate(Ray inputRay,
+                        boolean reverse) {
 		Ray ray = inputRay;
         Ray prevRay = ray;
         rayPath.clear();
@@ -35,7 +36,12 @@ public class LensSimulation {
 //        System.err.println(rayPath);
 //        System.err.println("");
 
-        for (Lens lens : lensList) {
+        List<Lens> lenses = new ArrayList<>();
+        lenses.addAll(lensList);
+        if (reverse) {
+            Collections.reverse(lenses);
+        }
+        for (Lens lens : lenses) {
             assert ray != null;
 
             ray = lens.refract(ray);
@@ -53,6 +59,10 @@ public class LensSimulation {
         rayPath.add(ray);
 		return ray;
 	}
+
+    public Ray simulate(Ray inputRay) {
+        return simulate(inputRay, false);
+    }
 
     public List<Ray> getRayPath() {
         assert !rayPath.isEmpty();
