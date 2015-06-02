@@ -31,9 +31,9 @@ public class LensSimulation {
 		Ray ray = inputRay;
         Ray prevRay = ray;
         rayPath.clear();
-        System.err.println(ray);
-        System.err.println(rayPath);
-        System.err.println("");
+//        System.err.println(ray);
+//        System.err.println(rayPath);
+//        System.err.println("");
 
         for (Lens lens : lensList) {
             assert ray != null;
@@ -44,9 +44,9 @@ public class LensSimulation {
                 rayPath.add(ray);
             }
 
-            System.err.println(ray);
-            System.err.println(rayPath);
-            System.err.println("");
+//            System.err.println(ray);
+//            System.err.println(rayPath);
+//            System.err.println("");
             prevRay = ray;
         }
 

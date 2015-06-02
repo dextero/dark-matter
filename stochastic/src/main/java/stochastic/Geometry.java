@@ -30,8 +30,8 @@ public class Geometry {
 
         double det = b * b - 4.0 * a * c;
         if (det < 0.0) {
-            System.err.printf("det = %f\n", det);
-            System.err.println("ray = " + ray + ", sphereCenter = " + sphereCenter + ", sphereRadius = " + sphereRadius);
+//            System.err.printf("det = %f\n", det);
+//            System.err.println("ray = " + ray + ", sphereCenter = " + sphereCenter + ", sphereRadius = " + sphereRadius);
             return null;
         } else {
             double t0 = (-b - Math.sqrt(det)) / 2.0 * a;
@@ -41,8 +41,8 @@ public class Geometry {
             if (t < 0.0) {
                 t = Math.max(t0, t1);
                 if (t < 0.0) {
-                    System.err.printf("t0 = %f, t1 = %f\n", t0, t1);
-                    System.err.println("ray = " + ray + ", sphereCenter = " + sphereCenter + ", sphereRadius = " + sphereRadius);
+//                    System.err.printf("t0 = %f, t1 = %f\n", t0, t1);
+//                    System.err.println("ray = " + ray + ", sphereCenter = " + sphereCenter + ", sphereRadius = " + sphereRadius);
                     return null;
                 }
             }

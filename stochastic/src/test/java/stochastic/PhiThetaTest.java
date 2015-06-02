@@ -1,9 +1,9 @@
+package stochastic;
+
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.junit.Test;
-import stochastic.PhiTheta;
-import stochastic.Utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by dex on 02.05.15.

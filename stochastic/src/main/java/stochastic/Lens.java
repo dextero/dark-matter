@@ -57,6 +57,10 @@ public class Lens {
         intermediateRays.add(ray);
 
         Vector3D farSphereIntersection = Geometry.raySphereIntersection(ray, farSphereCenter, radius);
+        if (farSphereIntersection == null) {
+            // TODO: hack to stop HGS from failing
+            return ray;
+        }
         assert farSphereIntersection != null;
 
         // intentionally points towards the sphere center

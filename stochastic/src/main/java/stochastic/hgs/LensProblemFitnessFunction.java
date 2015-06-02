@@ -8,6 +8,7 @@ import org.jage.app.hgs.problem.IProblemDomain;
 import org.jage.app.hgs.problem.IResolution;
 import org.jage.app.hgs.problem.real.RealChromosome;
 
+import org.jage.app.hgs.problem.real.RealDomain;
 import stochastic.*;
 
 import java.util.ArrayList;
@@ -23,13 +24,26 @@ public class LensProblemFitnessFunction implements IFitnessFunction {
         this.lightSource = lightSource;
     }
 
-    private LensSimulation createSimulation(double[] values) throws InvalidArgumentException {
+    private double rescale(double normalizedValue,
+                           double min,
+                           double max) {
+        return min + (max - min) * normalizedValue;
+    }
+
+    private LensSimulation createSimulation(double[] values,
+                                            RealDomain domain) throws InvalidArgumentException {
         assert values.length % 5 == 0;
+
+        double[] low = domain.getLowerBound();
+        double[] up = domain.getUpperBound();
 
         List<Lens> lenses = new ArrayList<>();
         for (int i = 0; i < values.length; i += 5) {
-            lenses.add(new Lens(new Vector3D(values[i], values[i + 1], values[i + 2]),
-                                values[i + 3], values[i + 4]));
+            lenses.add(new Lens(new Vector3D(rescale(values[i], low[i], up[i]),
+                                             rescale(values[i + 1], low[i + 1], up[i + 1]),
+                                             rescale(values[i + 2], low[i + 2], up[i + 2])),
+                                rescale(values[i + 3], low[i + 3], up[i + 3]),
+                                rescale(values[i + 4], low[i + 4], up[i + 4])));
         }
         return new LensSimulation(lenses);
     }
@@ -43,7 +57,7 @@ public class LensProblemFitnessFunction implements IFitnessFunction {
             double fitness = 0.0;
 
             try {
-                LensSimulation simulation = createSimulation(realChromosome.getGenes());
+                LensSimulation simulation = createSimulation(realChromosome.getGenes(), ((RealDomain) problemDomain));
 
                 for (PhiTheta image : images) {
                     Ray inputRay = new Ray(Vector3D.ZERO, image.toPosition());

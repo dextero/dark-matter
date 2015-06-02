@@ -1,13 +1,10 @@
+package stochastic;
+
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
-import stochastic.Angle;
-import stochastic.Geometry;
-import stochastic.Ray;
-import stochastic.Utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
 
 /**
  * Created by dex on 02.05.15.

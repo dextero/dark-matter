@@ -26,7 +26,7 @@ public class LensProblem extends AbstractProblem {
     private Range<Double> lensRadius = new Range<>(2.0, 10.0);
     private Range<Double> lensHeight = new Range<>(0.5, 1.5);
     private final Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 10.0);
-    private int numLenses = 2;
+    private int numLenses = 1;
 
     public LensProblem(IConfiguration config) throws ConfigurationException {
         super(config);

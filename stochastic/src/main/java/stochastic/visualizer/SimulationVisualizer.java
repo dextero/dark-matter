@@ -201,10 +201,16 @@ public class SimulationVisualizer extends JFrame implements KeyListener {
             lenses.add(new Lens(new Vector3D(0.0, 0.0, 7.0), 20.0, 10.0));
 
             LensSimulation sim = new LensSimulation(lenses);
-            Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(0.2, 0.0, -1.0).normalize());
-            sim.simulate(inputRay);
+            List<List<Ray>> paths = new ArrayList<>();
 
-            SimulationVisualizer.show(sim);
+            final double X_LIMIT = 1.5;
+            for (double x = -X_LIMIT; x <= X_LIMIT; x += 0.1) {
+                Ray inputRay = new Ray(new Vector3D(0.0, 0.0, 10.0), new Vector3D(x, 0.0, -1.0).normalize());
+                sim.simulate(inputRay);
+                paths.add(sim.getRayPath());
+            }
+
+            SimulationVisualizer.show(sim, paths);
         } catch (InvalidArgumentException e) {
             e.printStackTrace();
         }
