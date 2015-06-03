@@ -34,8 +34,8 @@ public class Geometry {
 //            System.err.println("ray = " + ray + ", sphereCenter = " + sphereCenter + ", sphereRadius = " + sphereRadius);
             return null;
         } else {
-            double t0 = (-b - Math.sqrt(det)) / 2.0 * a;
-            double t1 = (-b + Math.sqrt(det)) / 2.0 * a;
+            double t0 = (-b - Math.sqrt(det)) / 2.0 / a;
+            double t1 = (-b + Math.sqrt(det)) / 2.0 / a;
 
             double t = Math.min(t0, t1);
             if (t < 0.0) {

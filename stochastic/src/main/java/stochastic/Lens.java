@@ -1,5 +1,6 @@
 package stochastic;
 
+import org.apache.commons.math3.analysis.function.Sqrt;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import java.util.ArrayList;
@@ -47,6 +48,17 @@ public class Lens {
         Vector3D lensPlaneCollisionPoint = rayOrigin.add(rayDistanceUntilLensPlane, rayDirNormalized);
         return lensPlaneCollisionPoint.distance(center) <= height / 2.0;
     }
+
+    private boolean pointPossiblyAtLens(Vector3D point) {
+    	Vector3D centerToPoint = point.subtract(getCenter());
+    	if (Math.abs(centerToPoint.getZ()) > radius - getSphereCenterOffset()) {
+    		return false;
+    	}
+    	if (Math.pow(centerToPoint.getX(), 2) + Math.pow(centerToPoint.getY(), 2) > radius * radius / 4) {
+    		return false;
+    	}
+		return true;
+	}
 
     private static final double AIR_REFRACTIVE_INDEX = 1.0;
     private static final double GLASS_REFRACTIVE_INDEX = 1.5;
@@ -125,6 +137,13 @@ public class Lens {
         assert firstIntersectionPoint != null;
         assert secondIntersectionPoint != null;
 
+        if (!pointPossiblyAtLens(firstIntersectionPoint)) {
+        	return refract(ray, secondSphereCenter, secondIntersectionPoint, firstSphereCenter);
+        }
+        if (!pointPossiblyAtLens(secondIntersectionPoint)) {
+        	return refract(ray, firstSphereCenter, firstIntersectionPoint, secondSphereCenter);
+        }
+
         if (firstIntersectionPoint.distanceSq(ray.getOrigin()) < secondIntersectionPoint.distanceSq(ray.getOrigin())) {
             return refract(ray, firstSphereCenter, firstIntersectionPoint, secondSphereCenter);
         } else {
@@ -132,7 +151,7 @@ public class Lens {
         }
     }
 
-    public List<Ray> getIntermediateRays() {
+	public List<Ray> getIntermediateRays() {
         assert intermediateRays != null;
         return intermediateRays;
     }
