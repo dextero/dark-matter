@@ -1,5 +1,7 @@
 package stochastic.hgs;
-
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.jage.app.hgs.problem.AbstractProblem;
 import org.jage.app.hgs.problem.IFitnessFunction;
@@ -18,26 +20,54 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class LensProblem extends AbstractProblem {
     LensProblemFitnessFunction fitnessFunction;
 
-    private final static Range<Double> lensPosX = new Range<>(-5.0, 5.0);
-    private final static Range<Double> lensPosY = new Range<>(0.0, Utils.EPSILON);
-    private final static Range<Double> lensPosZ = new Range<>(0.5, 0.5 + Utils.EPSILON);
-    private final static Range<Double> lensRadius = new Range<>(2.0, 10.0);
-    private final static Range<Double> lensHeight = new Range<>(0.5, 1.5);
-    private final static Vector3D LIGHT_SOURCE = new Vector3D(0.0, 0.0, 10.0);
-    private final static Angle X_ANGLE = Angle.fromDegrees(20.0);
-    private final static List<PhiTheta> IMAGES = Arrays.asList(
-            new PhiTheta(Angle.fromDegrees(90.0 - X_ANGLE.getDegrees()),
-                         Angle.fromDegrees(0.0)));
-    private int numLenses = 1;
+    private static class Config {
+        @Parameter(names = "--show", arity = 1)
+        public String resultFile = null;
+        @Parameter(names = "--num-lenses", arity = 1)
+        public int numLenses = 1;
+        @Parameter(names = "--lens-x", arity = 1, converter = DoubleRangeConverter.class, description = "Format: 'min;max'")
+        public Range<Double> lensPosX = new Range<>(-5.0, 5.0);
+        @Parameter(names = "--lens-y", arity = 1, converter = DoubleRangeConverter.class, description = "Format: 'min;max'")
+        public Range<Double> lensPosY = new Range<>(0.0, Utils.EPSILON);
+        @Parameter(names = "--lens-z", arity = 1, converter = DoubleRangeConverter.class, description = "Format: 'min;max'")
+        public Range<Double> lensPosZ = new Range<>(0.5, 0.5 + Utils.EPSILON);
+        @Parameter(names = "--lens-radius", arity = 1, converter = DoubleRangeConverter.class, description = "Format: 'min;max'")
+        public Range<Double> lensRadius = new Range<>(2.0, 10.0);
+        @Parameter(names = "--lens-height", arity = 1, converter = DoubleRangeConverter.class, description = "Format: 'min;max'")
+        public Range<Double> lensHeight = new Range<>(0.5, 1.5);
+        @Parameter(names = "--light-source", arity = 1, converter = Vector3DConverter.class, description = "Format: 'x;y;z'")
+        public Vector3D lightSource = new Vector3D(0.0, 0.0, 10.0);
+        @Parameter(names = "--images", splitter = SpaceParameterSplitter.class, converter = PhiThetaConverter.class, description = "Format: 'phi1;theta1 phi2;theta2', both angles in degrees, phi = 0 => x+; phi = 90 => z+; theta = 90 => y+")
+        public List<PhiTheta> images = Arrays.asList(new PhiTheta(Angle.fromDegrees(70.0),
+                                                                  Angle.fromDegrees(0.0)));
+
+        @Override
+        public String toString() {
+            return "Config:" +
+                    "\n  numLenses = " + numLenses +
+                    "\n  lensPosX = " + lensPosX +
+                    "\n  lensPosY = " + lensPosY +
+                    "\n  lensPosZ = " + lensPosZ +
+                    "\n  lensRadius = " + lensRadius +
+                    "\n  lensHeight = " + lensHeight +
+                    "\n  lightSource = " + lightSource +
+                    "\n  images:" +
+                    "\n    " + String.join("\n    ", images.stream().map(PhiTheta::toString).collect(Collectors.toList())) +
+                    ";";
+        }
+    }
+
+    private static Config config = new Config();
 
     public LensProblem(IConfiguration config) throws ConfigurationException {
         super(config);
 
-        fitnessFunction = new LensProblemFitnessFunction(IMAGES, LIGHT_SOURCE);
+        fitnessFunction = new LensProblemFitnessFunction(LensProblem.config.images, LensProblem.config.lightSource);
     }
 
     @Override
@@ -53,19 +83,19 @@ public class LensProblem extends AbstractProblem {
     @Override
     public IProblemDomain getRootDomain() {
         double[] lowerBound = new double[]{
-                lensPosX.getMin(), lensPosY.getMin(), lensPosZ.getMin(),
-                lensRadius.getMin(), lensHeight.getMin()
+                config.lensPosX.getMin(), config.lensPosY.getMin(), config.lensPosZ.getMin(),
+                config.lensRadius.getMin(), config.lensHeight.getMin()
         };
         double[] upperBound = new double[]{
-                lensPosX.getMax(), lensPosY.getMax(), lensPosZ.getMax(),
-                lensRadius.getMax(), lensHeight.getMax()
+                config.lensPosX.getMax(), config.lensPosY.getMax(), config.lensPosZ.getMax(),
+                config.lensRadius.getMax(), config.lensHeight.getMax()
         };
 
         assert lowerBound.length == upperBound.length;
 
-        return new RealDomain(lowerBound.length * numLenses,
-                              Utils.duplicateDoubleArray(lowerBound, numLenses),
-                              Utils.duplicateDoubleArray(upperBound, numLenses));
+        return new RealDomain(lowerBound.length * config.numLenses,
+                              Utils.duplicateDoubleArray(lowerBound, config.numLenses),
+                              Utils.duplicateDoubleArray(upperBound, config.numLenses));
     }
 
     @Override
@@ -78,18 +108,18 @@ public class LensProblem extends AbstractProblem {
     }
 
     public static void main(String[] args) throws Exception {
-        boolean visualize = false;
-
-        if (args.length > 0 && args[0].equals("show")) {
-            visualize = true;
-            args = Arrays.copyOfRange(args, 1, args.length);
+        JCommander commander = new JCommander(config);
+        try {
+            commander.parse(args);
+        } catch (ParameterException e) {
+            commander.usage();
+            return;
         }
 
-        JCommander commander = new JCommander(LensProblem.class);
-        commander.parse(args);
-        
-        if (visualize) {
-            visualize(args.length > 1 ? args[1] : "defaultSessionName.aggregate1.txt");
+        System.err.println(config);
+
+        if (config.resultFile != null) {
+            visualize(config.resultFile);
         } else {
             org.jage.core.AgENode.main(new String[]{});
         }
@@ -97,7 +127,7 @@ public class LensProblem extends AbstractProblem {
 
     private static class Result {
         public List<Double> parameters = new ArrayList<>();
-        public double fitness;
+        public double fitness = -1.0;
     }
 
     private static Result parseResultLine(String line) {
@@ -126,6 +156,7 @@ public class LensProblem extends AbstractProblem {
         while ((line = reader.readLine()) != null) {
             Result result = parseResultLine(line);
             if (result.fitness > bestResult.fitness) {
+                System.err.println("found result with fitness = " + result.fitness);
                 bestResult = result;
             }
         }
@@ -140,22 +171,23 @@ public class LensProblem extends AbstractProblem {
             double scaledLensRadius = bestResult.parameters.get(i + 3);
             double scaledLensHeight = bestResult.parameters.get(i + 4);
 
-            Lens lens = new Lens(new Vector3D(scale(scaledLensPos.getX(), lensPosX),
-                                              scale(scaledLensPos.getY(), lensPosY),
-                                              scale(scaledLensPos.getZ(), lensPosZ)),
-                                 scale(scaledLensRadius, lensRadius),
-                                 scale(scaledLensHeight, lensHeight));
+            Lens lens = new Lens(new Vector3D(scale(scaledLensPos.getX(), config.lensPosX),
+                                              scale(scaledLensPos.getY(), config.lensPosY),
+                                              scale(scaledLensPos.getZ(), config.lensPosZ)),
+                                 scale(scaledLensRadius, config.lensRadius),
+                                 scale(scaledLensHeight, config.lensHeight));
             lenses.add(lens);
+            System.err.println(lens);
         }
         LensSimulation sim = new LensSimulation(lenses);
 
         List<List<Ray>> paths = new ArrayList<>();
-        for (PhiTheta phiTheta : IMAGES) {
+        for (PhiTheta phiTheta : config.images) {
             sim.simulate(new Ray(Vector3D.ZERO, phiTheta.toPosition()));
             paths.add(sim.getRayPath());
             System.err.println(paths.toString());
         }
 
-        SimulationVisualizer.show(sim, paths, LIGHT_SOURCE);
+        SimulationVisualizer.show(sim, paths, config.lightSource);
     }
 }
