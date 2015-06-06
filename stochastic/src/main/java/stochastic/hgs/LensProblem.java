@@ -78,41 +78,76 @@ public class LensProblem extends AbstractProblem {
     }
 
     public static void main(String[] args) throws Exception {
+        boolean visualize = false;
+
         if (args.length > 0 && args[0].equals("show")) {
-            visualize();
+            visualize = true;
+            args = Arrays.copyOfRange(args, 1, args.length);
+        }
+
+        JCommander commander = new JCommander(LensProblem.class);
+        commander.parse(args);
+        
+        if (visualize) {
+            visualize(args.length > 1 ? args[1] : "defaultSessionName.aggregate1.txt");
         } else {
-            org.jage.core.AgENode.main(args);
+            org.jage.core.AgENode.main(new String[]{});
         }
     }
 
-    private static void visualize() throws IOException, InvalidArgumentException {
-        BufferedReader reader = new BufferedReader(new FileReader("defaultSessionName.aggregate1.txt"));
-        String lastLine = "";
-        String line;
-        while ((line = reader.readLine()) != null) {
-            lastLine = line;
+    private static class Result {
+        public List<Double> parameters = new ArrayList<>();
+        public double fitness;
+    }
+
+    private static Result parseResultLine(String line) {
+        Scanner scanner = new Scanner(line.replaceAll("[^ .0-9]", ""));
+        Result result = new Result();
+
+        scanner.nextDouble();
+        scanner.nextDouble();
+
+        while (scanner.hasNextDouble()) {
+            result.parameters.add(scanner.nextDouble());
         }
 
-        lastLine = lastLine.replaceAll("[^ .0-9]", "");
-        System.err.println(lastLine);
-        Scanner scanner = new Scanner(lastLine);
+        int lastIndex = result.parameters.size() - 1;
+        result.fitness = result.parameters.get(lastIndex);
+        result.parameters.remove(lastIndex);
 
-        scanner.nextDouble();
-        scanner.nextDouble();
+        return result;
+    }
 
-        Vector3D scaledLensPos = new Vector3D(scanner.nextDouble(),
-                                              scanner.nextDouble(),
-                                              scanner.nextDouble());
-        double scaledLensRadius = scanner.nextDouble();
-        double scaledLensHeight = scanner.nextDouble();
+    private static void visualize(String inputFile) throws IOException, InvalidArgumentException {
+        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+        Result bestResult = new Result();
+        String line;
 
-        Lens lens = new Lens(new Vector3D(scale(scaledLensPos.getX(), lensPosX),
-                                          scale(scaledLensPos.getY(), lensPosY),
-                                          scale(scaledLensPos.getZ(), lensPosZ)),
-                             scale(scaledLensRadius, lensRadius),
-                             scale(scaledLensHeight, lensHeight));
-        System.err.println(lens);
-        LensSimulation sim = new LensSimulation(Arrays.asList(lens));
+        while ((line = reader.readLine()) != null) {
+            Result result = parseResultLine(line);
+            if (result.fitness > bestResult.fitness) {
+                bestResult = result;
+            }
+        }
+
+        System.err.println("fitness = " + bestResult.fitness);
+        List<Lens> lenses = new ArrayList<>();
+
+        for (int i = 0; i < bestResult.parameters.size(); i += 5) {
+            Vector3D scaledLensPos = new Vector3D(bestResult.parameters.get(i + 0),
+                                                  bestResult.parameters.get(i + 1),
+                                                  bestResult.parameters.get(i + 2));
+            double scaledLensRadius = bestResult.parameters.get(i + 3);
+            double scaledLensHeight = bestResult.parameters.get(i + 4);
+
+            Lens lens = new Lens(new Vector3D(scale(scaledLensPos.getX(), lensPosX),
+                                              scale(scaledLensPos.getY(), lensPosY),
+                                              scale(scaledLensPos.getZ(), lensPosZ)),
+                                 scale(scaledLensRadius, lensRadius),
+                                 scale(scaledLensHeight, lensHeight));
+            lenses.add(lens);
+        }
+        LensSimulation sim = new LensSimulation(lenses);
 
         List<List<Ray>> paths = new ArrayList<>();
         for (PhiTheta phiTheta : IMAGES) {
