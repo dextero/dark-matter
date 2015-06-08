@@ -38,10 +38,10 @@ function plot() {
     gnuplot "$PLOT_FILE"
 }
 
-DEFAULT_METAEPOCHS=$(column 1 "$INPUT_FILE" | tail -n 1)
+DEFAULT_METAEPOCHS=$(column 1 "$INPUT_FILE" | head -n 1)
 DEFAULT_LEVELS=$(column 2 "$INPUT_FILE" | tail -n 1)
-DEFAULT_MUTATION_RATE=$(column 3 "$INPUT_FILE" | tail -n 1)
-DEFAULT_POPULATION=$(column 4 "$INPUT_FILE" | tail -n 1)
+DEFAULT_MUTATION_RATE=$(column 3 "$INPUT_FILE" | head -n 1)
+DEFAULT_POPULATION=$(column 4 "$INPUT_FILE" | head -n 1)
 
 mkdir -p plots
 
@@ -53,6 +53,8 @@ plot "$TMPFILE" 'plots/fit_metaepochs.png' 'metaepochs' 'fit' 'min' '1:8' 'avg' 
 grep -E "^$DEFAULT_METAEPOCHS [0-9]+ $DEFAULT_MUTATION_RATE $DEFAULT_POPULATION" "$INPUT_FILE" > "$TMPFILE"
 plot "$TMPFILE" 'plots/time_levels.png' 'levels' 'time[s]' 'min' '2:5' 'avg' '2:6' 'max' '2:7'
 plot "$TMPFILE" 'plots/fit_levels.png' 'levels' 'fit' 'min' '2:8' 'avg' '2:9' 'max' '2:10'
+
+plot "$TMPFILE" 'plots/time_levels_efficiency.png' 'levels' 'error/time[s]' 'efficiency' '2:11'
 
 grep -E "^$DEFAULT_METAEPOCHS $DEFAULT_LEVELS [0-9]+\\.[0-9]+ $DEFAULT_POPULATION" "$INPUT_FILE" > "$TMPFILE"
 plot "$TMPFILE" 'plots/time_mutation_rate.png' 'mutation_rate' 'time[s]' 'min' '3:5' 'avg' '3:6' 'max' '3:7'

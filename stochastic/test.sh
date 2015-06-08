@@ -60,19 +60,14 @@ for ITERATION in $(seq 10); do
             $MUTATION_RATE \
             $POPULATION_SIZE \
             "${METAEPOCHS}_metaepochs_${LEVELS}_levels_${MUTATION_RATE}_mut_rate_${POPULATION_SIZE}_population" \
+            | tee "current_config/${METAEPOCHS}_metaepochs_${LEVELS}_levels_${MUTATION_RATE}_mut_rate_${POPULATION_SIZE}_population.resourcemanager.xml" \
             > current_config/resourcemanager.xml
 
         echo "* $METAEPOCHS metaepochs, $LEVELS levels, mutation rate $MUTATION_RATE, population size $POPULATION_SIZE" | tee -a times.txt
         /usr/bin/time -o >(tee -a times.txt) -f '\t%E real,\t%U user,\t%S sys' \
             java -jar "$SCRIPT_DIR/target/stochastic-0.0.1-SNAPSHOT-jar-with-dependencies.jar" \
                 --num-lenses "$NUM_LENSES" \
-                --lens-x "$X_RANGE" \
-                --lens-y "$Y_RANGE" \
                 --lens-z "$Z_RANGE" \
-                --lens-radius "$RADIUS_RANGE" \
-                --lens-height "$HEIGHT_RANGE" \
-                --light-source "$LIGHT_SOURCE" \
-                --images "$IMAGES" \
                 >/dev/null 2>&1
     done
     done

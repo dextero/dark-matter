@@ -49,7 +49,7 @@ for dir_name in INPUT_DIRS:
     for result in read_results(dir_name):
         all_data[result[:-2]].append(result)
 
-print('metaepochs levels mutation_rate population_size time_min[s] time_avg[s] time_max[s] fit_min fit_avg fit_max')
+print('metaepochs levels mutation_rate population_size time_min[s] time_avg[s] time_max[s] fit_min fit_avg fit_max efficiency')
 for result in sorted(all_data.values()):
     print(' '.join(str(x) for x in (
         result[0].metaepochs,
@@ -61,4 +61,5 @@ for result in sorted(all_data.values()):
         max(t.time for t in result),
         min(t.fit for t in result),
         mean(t.fit for t in result),
-        max(t.fit for t in result))))
+        max(t.fit for t in result),
+        (100000.0 - mean(t.fit for t in result)) / mean(t.time for t in result))))
